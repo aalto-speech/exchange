@@ -1,0 +1,6 @@
+.project
+.cproject
+*.o
+runtests
+train
+

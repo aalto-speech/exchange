@@ -16,6 +16,7 @@ public:
 
     void read_corpus(std::string fname);
     void initialize_classes();
+    void set_class_counts();
     double likelihood();
 
 private:

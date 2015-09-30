@@ -27,6 +27,8 @@ int main(int argc, char* argv[])
         e.initialize_classes();
         e.set_class_counts();
 
+        cout << "log likelihood: " << e.log_likelihood() << endl;
+
     } catch (string &e) {
         cerr << e << endl;
     }

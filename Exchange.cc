@@ -1,4 +1,5 @@
 #include <sstream>
+#include <cmath>
 
 #include "Exchange.hh"
 #include "io.hh"
@@ -92,5 +93,20 @@ Exchange::set_class_counts()
             m_class_rev_bigram_counts[src_class][tgt_class] += rbgit->second;
         }
     }
+}
+
+
+double
+Exchange::log_likelihood() {
+    double ll = 0.0;
+    for (auto cbg1=m_class_bigram_counts.begin(); cbg1 != m_class_bigram_counts.end(); ++cbg1)
+        for (auto cbg2=cbg1->begin(); cbg2 != cbg1->end(); ++cbg2)
+            ll += cbg2->second * log(cbg2->second);
+    for (auto wit=m_word_counts.begin(); wit != m_word_counts.end(); ++wit)
+        ll += (*wit) * log(*wit);
+    for (auto cit=m_class_counts.begin(); cit != m_class_counts.end(); ++cit)
+        ll -= 2* (*cit) * log(*cit);
+
+    return ll;
 }
 

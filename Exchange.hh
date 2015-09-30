@@ -15,6 +15,7 @@ public:
     ~Exchange() { };
 
     void read_corpus(std::string fname);
+    void initialize_classes();
     double likelihood();
 
 private:

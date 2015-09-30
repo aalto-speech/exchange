@@ -11,6 +11,7 @@ Exchange::read_corpus(string fname) {
 
     string line;
 
+    cerr << "Reading vocabulary.." << endl;
     SimpleFileInput corpusf(fname);
     set<string> word_types;
     while (corpusf.getline(line)) {
@@ -24,6 +25,12 @@ Exchange::read_corpus(string fname) {
         m_vocabulary_lookup[*wit] = m_vocabulary.size() - 1;
     }
     word_types.clear();
+
+    cerr << "Reading word counts.." << endl;
+
+    m_word_counts.resize(m_vocabulary.size());
+    m_word_bigram_counts.resize(m_vocabulary.size());
+    m_word_rev_bigram_counts.resize(m_vocabulary.size());
 
     SimpleFileInput corpusf2(fname);
     while (corpusf2.getline(line)) {
@@ -39,5 +46,10 @@ Exchange::read_corpus(string fname) {
             m_word_rev_bigram_counts[sent[i+1]][sent[i]]++;
         }
     }
+}
+
+
+void
+Exchange::initialize_classes() {
 
 }

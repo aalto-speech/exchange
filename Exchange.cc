@@ -147,3 +147,24 @@ Exchange::evaluate_exchange(int word,
 {
     return 0.0;
 }
+
+
+void
+Exchange::do_exchange(int word,
+                      int prev_class,
+                      int new_class)
+{
+    m_classes[prev_class].erase(word);
+    m_classes[new_class].insert(word);
+
+    int wc = m_word_counts[word];
+    m_class_counts[prev_class] -= wc;
+    m_class_counts[new_class] += wc;
+
+    for (int widx=0; widx<m_word_bigram_counts.size(); widx++) {
+        map<int, int> &bctxt = m_word_bigram_counts[widx];
+        //for (auto twit=)
+
+    }
+}
+

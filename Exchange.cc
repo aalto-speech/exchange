@@ -22,6 +22,10 @@ Exchange::read_corpus(string fname)
     }
     cerr << " " << word_types.size() << " words" << endl;
 
+    m_vocabulary.push_back("<s>");
+    m_vocabulary_lookup["<s>"] = m_vocabulary.size() - 1;
+    m_vocabulary.push_back("</s>");
+    m_vocabulary_lookup["</s>"] = m_vocabulary.size() - 1;
     for (auto wit=word_types.begin(); wit != word_types.end(); ++wit) {
         m_vocabulary.push_back(*wit);
         m_vocabulary_lookup[*wit] = m_vocabulary.size() - 1;
@@ -38,14 +42,18 @@ Exchange::read_corpus(string fname)
         vector<int> sent;
         stringstream ss(line);
         string token;
+
+        sent.push_back(m_vocabulary_lookup["<s>"]);
         while (ss >> token) sent.push_back(m_vocabulary_lookup[token]);
+        sent.push_back(m_vocabulary_lookup["</s>"]);
+
         for (unsigned int i=0; i<sent.size(); i++)
             m_word_counts[sent[i]]++;
         for (unsigned int i=0; i<sent.size()-1; i++) {
             m_word_bigram_counts[sent[i]][sent[i+1]]++;
             m_word_rev_bigram_counts[sent[i+1]][sent[i]]++;
         }
-        num_tokens += sent.size();
+        num_tokens += sent.size()-2;
     }
     cerr << " " << num_tokens << " tokens" << endl;
 }
@@ -60,12 +68,14 @@ Exchange::initialize_classes()
 
     m_classes.resize(m_num_classes);
     m_word_classes.resize(m_vocabulary.size());
-    unsigned int class_idx = 0;
+    unsigned int class_idx = 2;
     for (auto swit=sorted_words.rbegin(); swit != sorted_words.rend(); ++swit) {
         m_word_classes[swit->second] = class_idx;
         m_classes[class_idx].insert(swit->second);
-        class_idx = (class_idx+1) % m_num_classes;
+        class_idx = min((unsigned int)2, (class_idx+1) % m_num_classes);
     }
+    m_word_classes[m_vocabulary_lookup["<s>"]] = 0;
+    m_word_classes[m_vocabulary_lookup["</s>"]] = 0;
 }
 
 
@@ -105,7 +115,7 @@ Exchange::log_likelihood() {
     for (auto wit=m_word_counts.begin(); wit != m_word_counts.end(); ++wit)
         ll += (*wit) * log(*wit);
     for (auto cit=m_class_counts.begin(); cit != m_class_counts.end(); ++cit)
-        ll -= 2* (*cit) * log(*cit);
+        if (*cit != 0) ll -= 2* (*cit) * log(*cit);
 
     return ll;
 }

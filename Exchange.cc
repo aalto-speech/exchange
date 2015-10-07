@@ -107,7 +107,8 @@ Exchange::set_class_counts()
 
 
 double
-Exchange::log_likelihood() {
+Exchange::log_likelihood()
+{
     double ll = 0.0;
     for (auto cbg1=m_class_bigram_counts.begin(); cbg1 != m_class_bigram_counts.end(); ++cbg1)
         for (auto cbg2=cbg1->begin(); cbg2 != cbg1->end(); ++cbg2)
@@ -120,3 +121,29 @@ Exchange::log_likelihood() {
     return ll;
 }
 
+
+double
+Exchange::iterate()
+{
+    for (int widx=0; widx < (int)m_vocabulary.size(); widx++) {
+        if (m_word_classes[widx] == START_CLASS || m_word_classes[widx == UNK_CLASS]) continue;
+        vector<double> ll_diffs(m_classes.size(), -1e20);
+        int curr_class = m_word_classes[widx];
+        for (int cidx=2; cidx<(int)m_classes.size() && cidx != curr_class; cidx++)
+        {
+            double ll_diff = evaluate_exchange(widx, curr_class, cidx);
+            ll_diffs[widx] = ll_diff;
+        }
+    }
+
+    return log_likelihood();
+}
+
+
+double
+Exchange::evaluate_exchange(int word,
+                            int curr_class,
+                            int tentative_class)
+{
+    return 0.0;
+}

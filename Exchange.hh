@@ -7,6 +7,9 @@
 #include <vector>
 
 
+#define START_CLASS 0
+#define UNK_CLASS 1
+
 
 class Exchange {
 public:
@@ -18,6 +21,10 @@ public:
     void initialize_classes();
     void set_class_counts();
     double log_likelihood();
+    double iterate();
+    double evaluate_exchange(int word,
+                             int curr_class,
+                             int tentative_class);
 
 private:
 

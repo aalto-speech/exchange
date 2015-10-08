@@ -102,3 +102,22 @@ void exchangetest::ExchangeTest3(void)
     CPPUNIT_ASSERT_EQUAL( orig_ll+evaluated_ll_diff, ref_ll );
 }
 
+
+// Test for checking evaluation time
+void exchangetest::ExchangeTest4(void)
+{
+    cerr << endl;
+    Exchange e(2, "test/corpus1.txt");
+
+    int widx = e.m_vocabulary_lookup["d"];
+    int curr_class = e.m_word_classes[widx];
+    int new_class = (curr_class == 3) ? 2 : 3;
+
+    time_t t1, t2;
+    t1 = time(0);
+    for (int i=0; i<10000000; i++)
+        e.evaluate_exchange(widx, curr_class, new_class);
+    t2 = time(0);
+    cerr << "Seconds elapsed: " << (t2-t1) << endl;
+}
+

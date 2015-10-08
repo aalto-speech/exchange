@@ -17,6 +17,7 @@ class exchangetest : public CPPUNIT_NS :: TestFixture
     CPPUNIT_TEST (ExchangeTest1);
     CPPUNIT_TEST (ExchangeTest2);
     CPPUNIT_TEST (ExchangeTest3);
+    CPPUNIT_TEST (ExchangeTest4);
     CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -27,6 +28,7 @@ protected:
     void ExchangeTest1(void);
     void ExchangeTest2(void);
     void ExchangeTest3(void);
+    void ExchangeTest4(void);
 
 private:
 

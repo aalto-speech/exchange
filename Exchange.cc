@@ -72,19 +72,27 @@ void
 Exchange::initialize_classes()
 {
     multimap<int, int> sorted_words;
-    for (unsigned int i=0; i<m_word_counts.size(); ++i)
+    for (unsigned int i=0; i<m_word_counts.size(); ++i) {
+        if (m_vocabulary[i].find("<") != string::npos) continue;
         sorted_words.insert(make_pair(m_word_counts[i], i));
+    }
 
     m_classes.resize(m_num_classes);
     m_word_classes.resize(m_vocabulary.size());
-    unsigned int class_idx = 2;
+    unsigned int class_idx_helper = 2;
     for (auto swit=sorted_words.rbegin(); swit != sorted_words.rend(); ++swit) {
+        unsigned int class_idx = class_idx_helper % m_num_classes;
         m_word_classes[swit->second] = class_idx;
         m_classes[class_idx].insert(swit->second);
-        class_idx = min((unsigned int)2, (class_idx+1) % m_num_classes);
+
+        class_idx_helper++;
+        while (class_idx_helper % m_num_classes == START_CLASS ||
+               class_idx_helper % m_num_classes == UNK_CLASS)
+            class_idx_helper++;
+
     }
-    m_word_classes[m_vocabulary_lookup["<s>"]] = 0;
-    m_word_classes[m_vocabulary_lookup["</s>"]] = 0;
+    m_word_classes[m_vocabulary_lookup["<s>"]] = START_CLASS;
+    m_word_classes[m_vocabulary_lookup["</s>"]] = START_CLASS;
 }
 
 
@@ -163,17 +171,40 @@ Exchange::do_exchange(int word,
                       int prev_class,
                       int new_class)
 {
-    m_classes[prev_class].erase(word);
-    m_classes[new_class].insert(word);
-
     int wc = m_word_counts[word];
     m_class_counts[prev_class] -= wc;
     m_class_counts[new_class] += wc;
 
-    for (int widx=0; widx<m_word_bigram_counts.size(); widx++) {
-        map<int, int> &bctxt = m_word_bigram_counts[widx];
-        //for (auto twit=)
-
+    map<int, int> &bctxt = m_word_bigram_counts[word];
+    for (auto wit = bctxt.begin(); wit != bctxt.end(); ++wit) {
+        if (wit->first == word) continue;
+        int tgt_class = m_word_classes[wit->first];
+        m_class_bigram_counts[prev_class][tgt_class] -= wit->second;
+        m_class_bigram_counts[new_class][tgt_class] += wit->second;
+        m_class_rev_bigram_counts[tgt_class][prev_class] -= wit->second;
+        m_class_rev_bigram_counts[tgt_class][new_class] += wit->second;
     }
+
+    map<int, int> &rbctxt = m_word_rev_bigram_counts[word];
+    for (auto wit = rbctxt.begin(); wit != rbctxt.end(); ++wit) {
+        if (wit->first == word) continue;
+        int src_class = m_word_classes[wit->first];
+        m_class_bigram_counts[src_class][prev_class] -= wit->second;
+        m_class_bigram_counts[src_class][new_class] += wit->second;
+        m_class_rev_bigram_counts[prev_class][src_class] -= wit->second;
+        m_class_rev_bigram_counts[new_class][src_class] += wit->second;
+    }
+
+    auto wit = bctxt.find(word);
+    if (wit != bctxt.end()) {
+        m_class_bigram_counts[prev_class][prev_class] -= wit->second;
+        m_class_rev_bigram_counts[prev_class][prev_class] -= wit->second;
+        m_class_bigram_counts[new_class][new_class] += wit->second;
+        m_class_rev_bigram_counts[new_class][new_class] += wit->second;
+    }
+
+    m_classes[prev_class].erase(word);
+    m_classes[new_class].insert(word);
+    m_word_classes[word] = new_class;
 }
 

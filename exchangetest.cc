@@ -101,3 +101,22 @@ void exchangetest::ExchangeTest2(void)
     CPPUNIT_ASSERT( orig_class_rev_bigram_counts == e.m_class_rev_bigram_counts );
 }
 
+
+// Test for evaluating ll change for one exchange
+void exchangetest::ExchangeTest3(void)
+{
+    cerr << endl;
+    Exchange e(2, "test/corpus1.txt");
+
+    int widx = e.m_vocabulary_lookup["d"];
+    int curr_class = e.m_word_classes[widx];
+    int new_class = (curr_class == 3) ? 2 : 3;
+
+    double evaluated_ll_diff = e.evaluate_exchange(widx, curr_class, new_class);
+    double orig_ll = e.log_likelihood();
+    e.do_exchange(widx, curr_class, new_class);
+    double ref_ll = e.log_likelihood();
+
+    CPPUNIT_ASSERT_EQUAL( orig_ll+evaluated_ll_diff, ref_ll );
+}
+

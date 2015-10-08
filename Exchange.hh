@@ -21,13 +21,13 @@ public:
     void initialize_classes();
     void set_class_counts();
     double log_likelihood();
-    double iterate();
     double evaluate_exchange(int word,
                              int curr_class,
                              int tentative_class);
     void do_exchange(int word,
                      int prev_class,
                      int new_class);
+    double iterate();
 
 private:
 

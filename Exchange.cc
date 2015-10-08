@@ -115,11 +115,11 @@ Exchange::set_class_counts()
 
 
 double
-Exchange::log_likelihood()
+Exchange::log_likelihood() const
 {
     double ll = 0.0;
-    for (auto cbg1=m_class_bigram_counts.begin(); cbg1 != m_class_bigram_counts.end(); ++cbg1)
-        for (auto cbg2=cbg1->begin(); cbg2 != cbg1->end(); ++cbg2)
+    for (auto cbg1=m_class_bigram_counts.cbegin(); cbg1 != m_class_bigram_counts.cend(); ++cbg1)
+        for (auto cbg2=cbg1->cbegin(); cbg2 != cbg1->cend(); ++cbg2)
             ll += cbg2->second * log(cbg2->second);
     for (auto wit=m_word_counts.begin(); wit != m_word_counts.end(); ++wit)
         ll += (*wit) * log(*wit);
@@ -133,7 +133,7 @@ Exchange::log_likelihood()
 double
 Exchange::evaluate_exchange(int word,
                             int curr_class,
-                            int tentative_class)
+                            int tentative_class) const
 {
     double ll_diff = 0.0;
     int wc = m_word_counts[word];
@@ -144,7 +144,7 @@ Exchange::evaluate_exchange(int word,
     ll_diff -= 2 * (m_class_counts[tentative_class]+wc) * log(m_class_counts[tentative_class]+wc);
 
     map<pair<int, int>, int> count_diffs;
-    map<int, int> &bctxt = m_word_bigram_counts[word];
+    const map<int, int> &bctxt = m_word_bigram_counts.at(word);
     for (auto wit = bctxt.begin(); wit != bctxt.end(); ++wit) {
         if (wit->first == word) continue;
         int tgt_class = m_word_classes[wit->first];
@@ -152,7 +152,7 @@ Exchange::evaluate_exchange(int word,
         count_diffs[make_pair(tentative_class, tgt_class)] += wit->second;
     }
 
-    map<int, int> &rbctxt = m_word_rev_bigram_counts[word];
+    const map<int, int> &rbctxt = m_word_rev_bigram_counts.at(word);
     for (auto wit = rbctxt.begin(); wit != rbctxt.end(); ++wit) {
         if (wit->first == word) continue;
         int src_class = m_word_classes[wit->first];
@@ -169,7 +169,7 @@ Exchange::evaluate_exchange(int word,
     for (auto cdit=count_diffs.begin(); cdit != count_diffs.end(); ++cdit) {
         int src_class = cdit->first.first;
         int tgt_class = cdit->first.second;
-        int curr_count = m_class_bigram_counts[src_class][tgt_class];
+        int curr_count = m_class_bigram_counts[src_class].at(tgt_class);
         int new_count = curr_count + cdit->second;
         ll_diff -= curr_count * log(curr_count);
         ll_diff += new_count * log(new_count);

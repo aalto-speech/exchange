@@ -20,10 +20,10 @@ public:
     void read_corpus(std::string fname);
     void initialize_classes();
     void set_class_counts();
-    double log_likelihood();
+    double log_likelihood() const;
     double evaluate_exchange(int word,
                              int curr_class,
-                             int tentative_class);
+                             int tentative_class) const;
     void do_exchange(int word,
                      int prev_class,
                      int new_class);

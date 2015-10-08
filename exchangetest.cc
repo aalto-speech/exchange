@@ -35,20 +35,6 @@ print_class_bigram_counts(vector<map<int, int> > &class_bigram_counts)
     }
 }
 
-std::vector<std::string> m_vocabulary;
-std::map<std::string, int> m_vocabulary_lookup;
-
-std::vector<std::set<int> > m_classes;
-std::vector<int> m_word_classes;
-
-std::vector<int> m_word_counts;
-std::vector<std::map<int, int> > m_word_bigram_counts;
-std::vector<std::map<int, int> > m_word_rev_bigram_counts;
-
-std::vector<int> m_class_counts;
-std::vector<std::map<int, int> > m_class_bigram_counts;
-std::vector<std::map<int, int> > m_class_rev_bigram_counts;
-
 
 // Test that data is read and things set up properly
 void exchangetest::ExchangeTest1(void)
@@ -70,7 +56,6 @@ void exchangetest::ExchangeTest1(void)
     CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_rev_bigram_counts.size() );
     CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_class_counts.size() );
     CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_class_bigram_counts.size() );
-    CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_class_rev_bigram_counts.size() );
 }
 
 
@@ -82,7 +67,6 @@ void exchangetest::ExchangeTest2(void)
 
     vector<int> orig_class_counts = e.m_class_counts;
     vector<map<int, int> > orig_class_bigram_counts = e.m_class_bigram_counts;
-    vector<map<int, int> > orig_class_rev_bigram_counts = e.m_class_rev_bigram_counts;
 
     int widx = e.m_vocabulary_lookup["d"];
     int curr_class = e.m_word_classes[widx];
@@ -92,13 +76,11 @@ void exchangetest::ExchangeTest2(void)
 
     CPPUNIT_ASSERT( orig_class_counts != e.m_class_counts );
     CPPUNIT_ASSERT( orig_class_bigram_counts != e.m_class_bigram_counts );
-    CPPUNIT_ASSERT( orig_class_rev_bigram_counts != e.m_class_rev_bigram_counts );
 
     e.do_exchange(widx, new_class, curr_class);
 
     CPPUNIT_ASSERT( orig_class_counts == e.m_class_counts );
     CPPUNIT_ASSERT( orig_class_bigram_counts == e.m_class_bigram_counts );
-    CPPUNIT_ASSERT( orig_class_rev_bigram_counts == e.m_class_rev_bigram_counts );
 }
 
 

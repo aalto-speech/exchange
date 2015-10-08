@@ -101,7 +101,6 @@ Exchange::set_class_counts()
 {
     m_class_counts.resize(m_num_classes, 0);
     m_class_bigram_counts.resize(m_num_classes);
-    m_class_rev_bigram_counts.resize(m_num_classes);
     for (unsigned int i=0; i<m_word_counts.size(); i++)
         m_class_counts[m_word_classes[i]] += m_word_counts[i];
     for (unsigned int i=0; i<m_word_bigram_counts.size(); i++) {
@@ -110,14 +109,6 @@ Exchange::set_class_counts()
         for (auto bgit = curr_bigram_ctxt.begin(); bgit != curr_bigram_ctxt.end(); ++bgit) {
             int tgt_class = m_word_classes[bgit->first];
             m_class_bigram_counts[src_class][tgt_class] += bgit->second;
-        }
-    }
-    for (unsigned int i=0; i<m_word_rev_bigram_counts.size(); i++) {
-        int src_class = m_word_classes[i];
-        map<int, int> &curr_rev_bigram_ctxt = m_word_rev_bigram_counts[i];
-        for (auto rbgit = curr_rev_bigram_ctxt.begin(); rbgit != curr_rev_bigram_ctxt.end(); ++rbgit) {
-            int tgt_class = m_word_classes[rbgit->first];
-            m_class_rev_bigram_counts[src_class][tgt_class] += rbgit->second;
         }
     }
 }
@@ -203,8 +194,6 @@ Exchange::do_exchange(int word,
         int tgt_class = m_word_classes[wit->first];
         m_class_bigram_counts[prev_class][tgt_class] -= wit->second;
         m_class_bigram_counts[new_class][tgt_class] += wit->second;
-        m_class_rev_bigram_counts[tgt_class][prev_class] -= wit->second;
-        m_class_rev_bigram_counts[tgt_class][new_class] += wit->second;
     }
 
     map<int, int> &rbctxt = m_word_rev_bigram_counts[word];
@@ -213,16 +202,12 @@ Exchange::do_exchange(int word,
         int src_class = m_word_classes[wit->first];
         m_class_bigram_counts[src_class][prev_class] -= wit->second;
         m_class_bigram_counts[src_class][new_class] += wit->second;
-        m_class_rev_bigram_counts[prev_class][src_class] -= wit->second;
-        m_class_rev_bigram_counts[new_class][src_class] += wit->second;
     }
 
     auto wit = bctxt.find(word);
     if (wit != bctxt.end()) {
         m_class_bigram_counts[prev_class][prev_class] -= wit->second;
-        m_class_rev_bigram_counts[prev_class][prev_class] -= wit->second;
         m_class_bigram_counts[new_class][new_class] += wit->second;
-        m_class_rev_bigram_counts[new_class][new_class] += wit->second;
     }
 
     m_classes[prev_class].erase(word);

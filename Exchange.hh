@@ -45,7 +45,6 @@ private:
 
     std::vector<int> m_class_counts;
     std::vector<std::map<int, int> > m_class_bigram_counts;
-    std::vector<std::map<int, int> > m_class_rev_bigram_counts;
 };
 
 

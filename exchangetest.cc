@@ -25,8 +25,57 @@ void exchangetest::read_fixtures()
 }
 
 
-// Test that moving words between classes handles counts correctly
+void
+print_class_bigram_counts(vector<map<int, int> > &class_bigram_counts)
+{
+    for (unsigned int swi=0; swi<class_bigram_counts.size(); swi++) {
+        map<int, int> &bctxt = class_bigram_counts[swi];
+        for (auto bgit=bctxt.begin(); bgit != bctxt.end(); ++bgit)
+            cerr << swi << " " << bgit->first << ": " << bgit->second << endl;
+    }
+}
+
+std::vector<std::string> m_vocabulary;
+std::map<std::string, int> m_vocabulary_lookup;
+
+std::vector<std::set<int> > m_classes;
+std::vector<int> m_word_classes;
+
+std::vector<int> m_word_counts;
+std::vector<std::map<int, int> > m_word_bigram_counts;
+std::vector<std::map<int, int> > m_word_rev_bigram_counts;
+
+std::vector<int> m_class_counts;
+std::vector<std::map<int, int> > m_class_bigram_counts;
+std::vector<std::map<int, int> > m_class_rev_bigram_counts;
+
+
+// Test that data is read and things set up properly
 void exchangetest::ExchangeTest1(void)
+{
+    cerr << endl;
+
+    long unsigned int num_classes = 2;
+    long unsigned int num_words = 7;
+
+    Exchange e(num_classes, "test/corpus1.txt");
+
+    CPPUNIT_ASSERT_EQUAL( num_classes+2, (long unsigned int)e.m_num_classes );
+    CPPUNIT_ASSERT_EQUAL( num_words, e.m_vocabulary.size() );
+    CPPUNIT_ASSERT_EQUAL( num_words, e.m_vocabulary_lookup.size() );
+    CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_classes.size() );
+    CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_classes.size() );
+    CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_counts.size() );
+    CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_bigram_counts.size() );
+    CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_rev_bigram_counts.size() );
+    CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_class_counts.size() );
+    CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_class_bigram_counts.size() );
+    CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_class_rev_bigram_counts.size() );
+}
+
+
+// Test that moving words between classes handles counts correctly
+void exchangetest::ExchangeTest2(void)
 {
     cerr << endl;
     Exchange e(2, "test/corpus1.txt");

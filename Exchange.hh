@@ -14,7 +14,7 @@
 class Exchange {
 public:
     Exchange(int num_classes) : m_num_classes(num_classes) { };
-    Exchange(int num_classes, std::string fname) : m_num_classes(num_classes) { read_corpus(fname); };
+    Exchange(int num_classes, std::string fname);
     ~Exchange() { };
 
     void read_corpus(std::string fname);

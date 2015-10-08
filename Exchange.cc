@@ -7,6 +7,15 @@
 using namespace std;
 
 
+Exchange::Exchange(int num_classes, std::string fname)
+    : m_num_classes(num_classes+2)
+{
+    read_corpus(fname);
+    initialize_classes();
+    set_class_counts();
+}
+
+
 void
 Exchange::read_corpus(string fname)
 {

@@ -1,5 +1,5 @@
-cxxflags = -O3 -DNDEBUG -std=gnu++0x -Wall -Wno-write-strings -Wno-unused-function
-#cxxflags = -O0 -g -std=gnu++0x -Wall -Wno-write-strings -Wno-unused-function
+#cxxflags = -O3 -DNDEBUG -std=gnu++0x -Wall -Wno-write-strings -Wno-unused-function
+cxxflags = -O0 -g -std=gnu++0x -Wall -Wno-write-strings -Wno-unused-function
 
 ##################################################
 

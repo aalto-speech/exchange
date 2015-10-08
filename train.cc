@@ -24,8 +24,6 @@ int main(int argc, char* argv[])
         string model_fname = config.arguments[1];
 
         Exchange e(num_classes, corpus_fname);
-        e.initialize_classes();
-        e.set_class_counts();
 
         cout << "log likelihood: " << e.log_likelihood() << endl;
 

@@ -29,6 +29,8 @@ int main(int argc, char* argv[])
         cout << "log likelihood: " << e.log_likelihood() << endl;
 
         e.iterate();
+        e.write_word_classes(model_fname + ".cgenprobs.gz");
+        e.write_classes(model_fname + ".classes.gz");
 
     } catch (string &e) {
         cerr << e << endl;

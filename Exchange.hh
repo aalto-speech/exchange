@@ -18,6 +18,8 @@ public:
     ~Exchange() { };
 
     void read_corpus(std::string fname);
+    void write_word_classes(std::string fname) const;
+    void write_classes(std::string fname) const;
     void initialize_classes();
     void set_class_counts();
     double log_likelihood() const;

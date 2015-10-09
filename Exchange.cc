@@ -35,6 +35,8 @@ Exchange::read_corpus(string fname)
     m_vocabulary_lookup["<s>"] = m_vocabulary.size() - 1;
     m_vocabulary.push_back("</s>");
     m_vocabulary_lookup["</s>"] = m_vocabulary.size() - 1;
+    m_vocabulary.push_back("<unk>");
+    m_vocabulary_lookup["<unk>"] = m_vocabulary.size() - 1;
     for (auto wit=word_types.begin(); wit != word_types.end(); ++wit) {
         m_vocabulary.push_back(*wit);
         m_vocabulary_lookup[*wit] = m_vocabulary.size() - 1;
@@ -69,6 +71,33 @@ Exchange::read_corpus(string fname)
 
 
 void
+Exchange::write_word_classes(string fname) const
+{
+    SimpleFileOutput mfo(fname);
+    for (unsigned int widx = 0; widx < m_vocabulary.size(); widx++)
+        mfo << m_vocabulary[widx] << "\t" << m_word_classes[widx] << " 0.000000\n";
+    mfo.close();
+}
+
+
+void
+Exchange::write_classes(string fname) const
+{
+    SimpleFileOutput mfo(fname);
+    for (int cidx = 0; cidx < m_num_classes; cidx++) {
+        mfo << cidx << ": ";
+        const set<int> &words = m_classes[cidx];
+        for (auto wit=words.begin(); wit != words.end(); ++wit) {
+            if (wit != words.begin()) mfo << ",";
+            mfo << m_vocabulary[*wit];
+        }
+        mfo << "\n";
+    }
+    mfo.close();
+}
+
+
+void
 Exchange::initialize_classes()
 {
     multimap<int, int> sorted_words;
@@ -91,10 +120,13 @@ Exchange::initialize_classes()
             class_idx_helper++;
 
     }
+
     m_word_classes[m_vocabulary_lookup["<s>"]] = START_CLASS;
     m_word_classes[m_vocabulary_lookup["</s>"]] = START_CLASS;
+    m_word_classes[m_vocabulary_lookup["<unk>"]] = UNK_CLASS;
     m_classes[START_CLASS].insert(m_vocabulary_lookup["<s>"]);
     m_classes[START_CLASS].insert(m_vocabulary_lookup["</s>"]);
+    m_classes[UNK_CLASS].insert(m_vocabulary_lookup["<unk>"]);
 }
 
 
@@ -129,7 +161,7 @@ Exchange::log_likelihood() const
         for (auto cbg2=cbg1->cbegin(); cbg2 != cbg1->cend(); ++cbg2)
             if (cbg2->second != 0) ll += cbg2->second * log(cbg2->second);
     for (auto wit=m_word_counts.begin(); wit != m_word_counts.end(); ++wit)
-        ll += (*wit) * log(*wit);
+        if (*wit != 0) ll += (*wit) * log(*wit);
     for (auto cit=m_class_counts.begin(); cit != m_class_counts.end(); ++cit)
         if (*cit != 0) ll -= 2* (*cit) * log(*cit);
 
@@ -355,7 +387,7 @@ Exchange::iterate(int ll_print_interval)
     for (int widx=0; widx < (int)m_vocabulary.size(); widx++) {
 
         if (m_word_classes[widx] == START_CLASS ||
-            m_word_classes[widx == UNK_CLASS]) continue;
+            m_word_classes[widx] == UNK_CLASS) continue;
 
         int curr_class = m_word_classes[widx];
         int best_class = -1;
@@ -381,6 +413,7 @@ Exchange::iterate(int ll_print_interval)
         if (ll_print_interval > 0 && widx % ll_print_interval == 0) {
             double ll = log_likelihood();
             cerr << "log likelihood: " << ll << endl;
+            return log_likelihood();
         }
     }
 

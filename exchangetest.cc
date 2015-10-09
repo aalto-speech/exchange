@@ -74,7 +74,7 @@ void exchangetest::ExchangeTest1(void)
     cerr << endl;
 
     long unsigned int num_classes = 2;
-    long unsigned int num_words = 7;
+    long unsigned int num_words = 8;
 
     Exchange e(num_classes, "test/corpus1.txt");
 

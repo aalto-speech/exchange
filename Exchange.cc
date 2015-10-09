@@ -1,5 +1,6 @@
 #include <sstream>
 #include <cmath>
+#include <ctime>
 
 #include "Exchange.hh"
 #include "io.hh"
@@ -382,39 +383,55 @@ Exchange::do_exchange(int word,
 
 
 double
-Exchange::iterate(int ll_print_interval)
+Exchange::iterate(int max_iter,
+                  int max_seconds,
+                  int ll_print_interval)
 {
-    for (int widx=0; widx < (int)m_vocabulary.size(); widx++) {
+    time_t start_time, curr_time;
+    start_time = time(0);
 
-        if (m_word_classes[widx] == START_CLASS ||
-            m_word_classes[widx] == UNK_CLASS) continue;
+    int curr_iter = 0;
+    while (true) {
+        for (int widx=0; widx < (int)m_vocabulary.size(); widx++) {
 
-        int curr_class = m_word_classes[widx];
-        int best_class = -1;
-        double best_ll_diff = -1e20;
+            if (m_word_classes[widx] == START_CLASS ||
+                m_word_classes[widx] == UNK_CLASS) continue;
 
-        for (int cidx=2; cidx<(int)m_classes.size(); cidx++) {
-            if (cidx == curr_class) continue;
-            double ll_diff = evaluate_exchange_2(widx, curr_class, cidx);
-            if (ll_diff > best_ll_diff) {
-                best_ll_diff = ll_diff;
-                best_class = cidx;
+            int curr_class = m_word_classes[widx];
+            int best_class = -1;
+            double best_ll_diff = -1e20;
+
+            for (int cidx=2; cidx<(int)m_classes.size(); cidx++) {
+                if (cidx == curr_class) continue;
+                double ll_diff = evaluate_exchange_2(widx, curr_class, cidx);
+                if (ll_diff > best_ll_diff) {
+                    best_ll_diff = ll_diff;
+                    best_class = cidx;
+                }
+            }
+
+            if (best_class == -1) {
+                cerr << "problem in word: " << m_vocabulary[widx] << endl;
+                exit(1);
+            }
+
+            if (best_ll_diff > 0.0)
+                do_exchange(widx, curr_class, best_class);
+
+            if (ll_print_interval > 0 && widx % ll_print_interval == 0) {
+                double ll = log_likelihood();
+                cerr << "log likelihood: " << ll << endl;
+            }
+
+            if (widx % 1000 == 0) {
+                curr_time = time(0);
+                if (curr_time-start_time > max_seconds)
+                    return log_likelihood();
             }
         }
 
-        if (best_class == -1) {
-            cerr << "problem in word: " << m_vocabulary[widx] << endl;
-            exit(1);
-        }
-
-        if (best_ll_diff > 0.0)
-            do_exchange(widx, curr_class, best_class);
-
-        if (ll_print_interval > 0 && widx % ll_print_interval == 0) {
-            double ll = log_likelihood();
-            cerr << "log likelihood: " << ll << endl;
-            return log_likelihood();
-        }
+        curr_iter++;
+        if (max_iter > 0 && curr_iter >= max_iter) return log_likelihood();
     }
 
     return log_likelihood();

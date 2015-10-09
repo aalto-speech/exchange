@@ -137,7 +137,7 @@ Exchange::log_likelihood() const
 }
 
 
-void
+void inline
 evaluate_ll_diff(double &ll_diff,
                  int old_count,
                  int new_count)
@@ -242,31 +242,23 @@ Exchange::evaluate_exchange_2(int word,
     if (scit != wb_ctxt.end()) self_count = scit->second;
 
     int curr_count = m_class_bigram_counts[curr_class].at(tentative_class);
-    int new_count = curr_count;
-    new_count -= wc_counts.at(tentative_class);
-    new_count += cw_counts.at(curr_class);
-    new_count -= self_count;
+    int new_count = curr_count - wc_counts.at(tentative_class)
+            + cw_counts.at(curr_class) - self_count;
     evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[tentative_class].at(curr_class);
-    new_count = curr_count;
-    new_count -= cw_counts.at(tentative_class);
-    new_count += wc_counts.at(curr_class);
-    new_count -= self_count;
+    new_count = curr_count - cw_counts.at(tentative_class)
+            + wc_counts.at(curr_class) - self_count;
     evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[curr_class].at(curr_class);
-    new_count = curr_count;
-    new_count -= wc_counts.at(curr_class);
-    new_count -= cw_counts.at(curr_class);
-    new_count += self_count;
+    new_count = curr_count - wc_counts.at(curr_class)
+            - cw_counts.at(curr_class) + self_count;
     evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[tentative_class].at(tentative_class);
-    new_count = curr_count;
-    new_count += wc_counts.at(tentative_class);
-    new_count += cw_counts.at(tentative_class);
-    new_count += self_count;
+    new_count = curr_count + wc_counts.at(tentative_class)
+            + cw_counts.at(tentative_class) + self_count;
     evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     return ll_diff;

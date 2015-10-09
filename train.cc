@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <ctime>
 
 #include "conf.hh"
 #include "Exchange.hh"
@@ -26,6 +27,8 @@ int main(int argc, char* argv[])
         Exchange e(num_classes, corpus_fname);
 
         cout << "log likelihood: " << e.log_likelihood() << endl;
+
+        e.iterate();
 
     } catch (string &e) {
         cerr << e << endl;

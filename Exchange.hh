@@ -30,7 +30,7 @@ public:
     void do_exchange(int word,
                      int prev_class,
                      int new_class);
-    double iterate();
+    double iterate(int ll_print_interval=10000);
 
 private:
 

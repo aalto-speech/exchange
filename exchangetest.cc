@@ -49,7 +49,6 @@ print_classes(Exchange &e)
 }
 
 
-
 void
 assert_same(Exchange &e1,
             Exchange &e2)

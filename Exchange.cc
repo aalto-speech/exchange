@@ -137,6 +137,16 @@ Exchange::log_likelihood() const
 }
 
 
+void
+evaluate_ll_diff(double &ll_diff,
+                 int old_count,
+                 int new_count)
+{
+    ll_diff -= old_count * log(old_count);
+    ll_diff += new_count * log(new_count);
+}
+
+
 double
 Exchange::evaluate_exchange(int word,
                             int curr_class,
@@ -178,8 +188,7 @@ Exchange::evaluate_exchange(int word,
         int tgt_class = cdit->first.second;
         int curr_count = m_class_bigram_counts[src_class].at(tgt_class);
         int new_count = curr_count + cdit->second;
-        ll_diff -= curr_count * log(curr_count);
-        ll_diff += new_count * log(new_count);
+        evaluate_ll_diff(ll_diff, curr_count, new_count);
     }
 
     return ll_diff;
@@ -193,78 +202,72 @@ Exchange::evaluate_exchange_2(int word,
 {
     double ll_diff = 0.0;
     int wc = m_word_counts[word];
+    const map<int, int> &wb_ctxt = m_word_bigram_counts.at(word);
+    const map<int, int> &cw_counts = m_class_word_counts.at(word);
+    const map<int, int> &wc_counts = m_word_class_counts.at(word);
 
     ll_diff += 2 * (m_class_counts[curr_class]) * log(m_class_counts[curr_class]);
     ll_diff -= 2 * (m_class_counts[curr_class]-wc) * log(m_class_counts[curr_class]-wc);
     ll_diff += 2 * (m_class_counts[tentative_class]) * log(m_class_counts[tentative_class]);
     ll_diff -= 2 * (m_class_counts[tentative_class]+wc) * log(m_class_counts[tentative_class]+wc);
 
-    for (auto wcit=m_word_class_counts[word].begin(); wcit != m_word_class_counts[word].end(); ++wcit) {
+    for (auto wcit=wc_counts.begin(); wcit != wc_counts.end(); ++wcit) {
         if (wcit->first == curr_class) continue;
         if (wcit->first == tentative_class) continue;
 
         int curr_count = m_class_bigram_counts[curr_class].at(wcit->first);
-        ll_diff -= curr_count * log(curr_count);
         int new_count = curr_count - wcit->second;
-        ll_diff += new_count * log(new_count);
+        evaluate_ll_diff(ll_diff, curr_count, new_count);
 
         curr_count = m_class_bigram_counts[tentative_class].at(wcit->first);
-        ll_diff -= curr_count * log(curr_count);
         new_count = curr_count + wcit->second;
-        ll_diff += new_count * log(new_count);
+        evaluate_ll_diff(ll_diff, curr_count, new_count);
     }
 
-    for (auto wcit=m_class_word_counts[word].begin(); wcit != m_class_word_counts[word].end(); ++wcit) {
+    for (auto wcit=cw_counts.begin(); wcit != cw_counts.end(); ++wcit) {
         if (wcit->first == curr_class) continue;
         if (wcit->first == tentative_class) continue;
 
         int curr_count = m_class_bigram_counts[wcit->first].at(curr_class);
-        ll_diff -= curr_count * log(curr_count);
         int new_count = curr_count - wcit->second;
-        ll_diff += new_count * log(new_count);
+        evaluate_ll_diff(ll_diff, curr_count, new_count);
 
         curr_count = m_class_bigram_counts[wcit->first].at(tentative_class);
-        ll_diff -= curr_count * log(curr_count);
         new_count = curr_count + wcit->second;
-        ll_diff += new_count * log(new_count);
+        evaluate_ll_diff(ll_diff, curr_count, new_count);
     }
 
-    const map<int, int> &bctxt = m_word_bigram_counts.at(word);
     int self_count = 0;
-    auto scit = bctxt.find(word);
-    if (scit != bctxt.end()) self_count = scit->second;
+    auto scit = wb_ctxt.find(word);
+    if (scit != wb_ctxt.end()) self_count = scit->second;
 
     int curr_count = m_class_bigram_counts[curr_class].at(tentative_class);
     int new_count = curr_count;
-    new_count -= m_word_class_counts[word].at(tentative_class);
-    new_count += m_class_word_counts[word].at(curr_class);
+    new_count -= wc_counts.at(tentative_class);
+    new_count += cw_counts.at(curr_class);
     new_count -= self_count;
-    ll_diff -= curr_count * log(curr_count);
-    ll_diff += new_count * log(new_count);
+    evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[tentative_class].at(curr_class);
     new_count = curr_count;
-    new_count -= m_class_word_counts[word].at(tentative_class);
-    new_count += m_word_class_counts[word].at(curr_class);
+    new_count -= cw_counts.at(tentative_class);
+    new_count += wc_counts.at(curr_class);
     new_count -= self_count;
-    ll_diff -= curr_count * log(curr_count);
-    ll_diff += new_count * log(new_count);
+    evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[curr_class].at(curr_class);
     new_count = curr_count;
-    new_count -= m_word_class_counts[word].at(curr_class);
-    new_count -= m_class_word_counts[word].at(curr_class);
+    new_count -= wc_counts.at(curr_class);
+    new_count -= cw_counts.at(curr_class);
     new_count += self_count;
-    ll_diff -= curr_count * log(curr_count);
-    ll_diff += new_count * log(new_count);
+    evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[tentative_class].at(tentative_class);
     new_count = curr_count;
-    new_count += m_word_class_counts[word].at(tentative_class);
-    new_count += m_class_word_counts[word].at(tentative_class);
+    new_count += wc_counts.at(tentative_class);
+    new_count += cw_counts.at(tentative_class);
     new_count += self_count;
-    ll_diff -= curr_count * log(curr_count);
-    ll_diff += new_count * log(new_count);
+    evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     return ll_diff;
 }

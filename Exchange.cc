@@ -93,6 +93,8 @@ Exchange::initialize_classes()
     }
     m_word_classes[m_vocabulary_lookup["<s>"]] = START_CLASS;
     m_word_classes[m_vocabulary_lookup["</s>"]] = START_CLASS;
+    m_classes[START_CLASS].insert(m_vocabulary_lookup["<s>"]);
+    m_classes[START_CLASS].insert(m_vocabulary_lookup["</s>"]);
 }
 
 
@@ -101,7 +103,7 @@ Exchange::set_class_counts()
 {
     m_class_counts.resize(m_num_classes, 0);
     m_class_bigram_counts.resize(m_num_classes);
-    m_class_word_counts.resize(m_num_classes);
+    m_class_word_counts.resize(m_vocabulary.size());
     m_word_class_counts.resize(m_vocabulary.size());
 
     for (unsigned int i=0; i<m_word_counts.size(); i++)
@@ -112,7 +114,7 @@ Exchange::set_class_counts()
         for (auto bgit = curr_bigram_ctxt.begin(); bgit != curr_bigram_ctxt.end(); ++bgit) {
             int tgt_class = m_word_classes[bgit->first];
             m_class_bigram_counts[src_class][tgt_class] += bgit->second;
-            m_class_word_counts[src_class][bgit->first] += bgit->second;
+            m_class_word_counts[bgit->first][src_class] += bgit->second;
             m_word_class_counts[i][tgt_class] += bgit->second;
         }
     }
@@ -184,6 +186,90 @@ Exchange::evaluate_exchange(int word,
 }
 
 
+double
+Exchange::evaluate_exchange_2(int word,
+                              int curr_class,
+                              int tentative_class) const
+{
+    double ll_diff = 0.0;
+    int wc = m_word_counts[word];
+
+    ll_diff += 2 * (m_class_counts[curr_class]) * log(m_class_counts[curr_class]);
+    ll_diff -= 2 * (m_class_counts[curr_class]-wc) * log(m_class_counts[curr_class]-wc);
+    ll_diff += 2 * (m_class_counts[tentative_class]) * log(m_class_counts[tentative_class]);
+    ll_diff -= 2 * (m_class_counts[tentative_class]+wc) * log(m_class_counts[tentative_class]+wc);
+
+    for (auto wcit=m_word_class_counts[word].begin(); wcit != m_word_class_counts[word].end(); ++wcit) {
+        if (wcit->first == curr_class) continue;
+        if (wcit->first == tentative_class) continue;
+
+        int curr_count = m_class_bigram_counts[curr_class].at(wcit->first);
+        ll_diff -= curr_count * log(curr_count);
+        int new_count = curr_count - wcit->second;
+        ll_diff += new_count * log(new_count);
+
+        curr_count = m_class_bigram_counts[tentative_class].at(wcit->first);
+        ll_diff -= curr_count * log(curr_count);
+        new_count = curr_count + wcit->second;
+        ll_diff += new_count * log(new_count);
+    }
+
+    for (auto wcit=m_class_word_counts[word].begin(); wcit != m_class_word_counts[word].end(); ++wcit) {
+        if (wcit->first == curr_class) continue;
+        if (wcit->first == tentative_class) continue;
+
+        int curr_count = m_class_bigram_counts[wcit->first].at(curr_class);
+        ll_diff -= curr_count * log(curr_count);
+        int new_count = curr_count - wcit->second;
+        ll_diff += new_count * log(new_count);
+
+        curr_count = m_class_bigram_counts[wcit->first].at(tentative_class);
+        ll_diff -= curr_count * log(curr_count);
+        new_count = curr_count + wcit->second;
+        ll_diff += new_count * log(new_count);
+    }
+
+    const map<int, int> &bctxt = m_word_bigram_counts.at(word);
+    int self_count = 0;
+    auto scit = bctxt.find(word);
+    if (scit != bctxt.end()) self_count = scit->second;
+
+    int curr_count = m_class_bigram_counts[curr_class].at(tentative_class);
+    int new_count = curr_count;
+    new_count -= m_word_class_counts[word].at(tentative_class);
+    new_count += m_class_word_counts[word].at(curr_class);
+    new_count -= self_count;
+    ll_diff -= curr_count * log(curr_count);
+    ll_diff += new_count * log(new_count);
+
+    curr_count = m_class_bigram_counts[tentative_class].at(curr_class);
+    new_count = curr_count;
+    new_count -= m_class_word_counts[word].at(tentative_class);
+    new_count += m_word_class_counts[word].at(curr_class);
+    new_count -= self_count;
+    ll_diff -= curr_count * log(curr_count);
+    ll_diff += new_count * log(new_count);
+
+    curr_count = m_class_bigram_counts[curr_class].at(curr_class);
+    new_count = curr_count;
+    new_count -= m_word_class_counts[word].at(curr_class);
+    new_count -= m_class_word_counts[word].at(curr_class);
+    new_count += self_count;
+    ll_diff -= curr_count * log(curr_count);
+    ll_diff += new_count * log(new_count);
+
+    curr_count = m_class_bigram_counts[tentative_class].at(tentative_class);
+    new_count = curr_count;
+    new_count += m_word_class_counts[word].at(tentative_class);
+    new_count += m_class_word_counts[word].at(tentative_class);
+    new_count += self_count;
+    ll_diff -= curr_count * log(curr_count);
+    ll_diff += new_count * log(new_count);
+
+    return ll_diff;
+}
+
+
 void
 Exchange::do_exchange(int word,
                       int prev_class,
@@ -199,8 +285,8 @@ Exchange::do_exchange(int word,
         int tgt_class = m_word_classes[wit->first];
         m_class_bigram_counts[prev_class][tgt_class] -= wit->second;
         m_class_bigram_counts[new_class][tgt_class] += wit->second;
-        m_class_word_counts[prev_class][wit->first] -= wit->second;
-        m_class_word_counts[new_class][wit->first] += wit->second;
+        m_class_word_counts[wit->first][prev_class] -= wit->second;
+        m_class_word_counts[wit->first][new_class] += wit->second;
     }
 
     map<int, int> &rbctxt = m_word_rev_bigram_counts[word];
@@ -217,8 +303,8 @@ Exchange::do_exchange(int word,
     if (wit != bctxt.end()) {
         m_class_bigram_counts[prev_class][prev_class] -= wit->second;
         m_class_bigram_counts[new_class][new_class] += wit->second;
-        m_class_word_counts[prev_class][word] -= wit->second;
-        m_class_word_counts[new_class][word] += wit->second;
+        m_class_word_counts[word][prev_class] -= wit->second;
+        m_class_word_counts[word][new_class] += wit->second;
         m_word_class_counts[word][prev_class] -= wit->second;
         m_word_class_counts[word][new_class] += wit->second;
     }

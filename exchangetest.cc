@@ -37,6 +37,20 @@ print_class_bigram_counts(vector<map<int, int> > &class_bigram_counts)
 
 
 void
+print_classes(Exchange &e)
+{
+    for (unsigned int c=0; c<e.m_classes.size(); c++) {
+        cerr << "Class " << c << ":";
+        set<int> &words = e.m_classes[c];
+        for (auto wit=words.begin(); wit != words.end(); ++wit)
+            cerr << " " << e.m_vocabulary[*wit];
+        cerr << endl;
+    }
+}
+
+
+
+void
 assert_same(Exchange &e1,
             Exchange &e2)
 {
@@ -146,11 +160,13 @@ void exchangetest::ExchangeTest4(void)
     int new_class = (curr_class == 3) ? 2 : 3;
 
     double evaluated_ll_diff = e.evaluate_exchange(widx, curr_class, new_class);
+    double evaluated_ll_diff_2 = e.evaluate_exchange_2(widx, curr_class, new_class);
     double orig_ll = e.log_likelihood();
     e.do_exchange(widx, curr_class, new_class);
     double ref_ll = e.log_likelihood();
 
     CPPUNIT_ASSERT_EQUAL( orig_ll+evaluated_ll_diff, ref_ll );
+    CPPUNIT_ASSERT_EQUAL( orig_ll+evaluated_ll_diff_2, ref_ll );
 }
 
 
@@ -167,7 +183,7 @@ void exchangetest::ExchangeTest5(void)
     time_t t1, t2;
     t1 = time(0);
     for (int i=0; i<10000000; i++)
-        e.evaluate_exchange(widx, curr_class, new_class);
+        e.evaluate_exchange_2(widx, curr_class, new_class);
     t2 = time(0);
     cerr << "Seconds elapsed: " << (t2-t1) << endl;
 }

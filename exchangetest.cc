@@ -181,9 +181,11 @@ void exchangetest::ExchangeTest5(void)
 
     time_t t1, t2;
     t1 = time(0);
-    for (int i=0; i<10000000; i++)
+    for (int i=0; i<5000000; i++)
         e.evaluate_exchange_2(widx, curr_class, new_class);
     t2 = time(0);
     cerr << "Seconds elapsed: " << (t2-t1) << endl;
+    CPPUNIT_ASSERT( (t2-t1) < 5 );
 }
+
 

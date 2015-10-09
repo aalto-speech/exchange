@@ -354,13 +354,14 @@ Exchange::iterate(int ll_print_interval)
 {
     for (int widx=0; widx < (int)m_vocabulary.size(); widx++) {
 
-        if (m_word_classes[widx] == START_CLASS || m_word_classes[widx == UNK_CLASS]) continue;
+        if (m_word_classes[widx] == START_CLASS ||
+            m_word_classes[widx == UNK_CLASS]) continue;
+
         int curr_class = m_word_classes[widx];
         int best_class = -1;
         double best_ll_diff = -1e20;
 
-        for (int cidx=2; cidx<(int)m_classes.size(); cidx++)
-        {
+        for (int cidx=2; cidx<(int)m_classes.size(); cidx++) {
             if (cidx == curr_class) continue;
             double ll_diff = evaluate_exchange_2(widx, curr_class, cidx);
             if (ll_diff > best_ll_diff) {

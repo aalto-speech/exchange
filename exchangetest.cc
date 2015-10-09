@@ -36,6 +36,25 @@ print_class_bigram_counts(vector<map<int, int> > &class_bigram_counts)
 }
 
 
+void
+assert_same(Exchange &e1,
+            Exchange &e2)
+{
+    CPPUNIT_ASSERT( e1.m_num_classes == e2.m_num_classes );
+    CPPUNIT_ASSERT( e1.m_vocabulary == e2.m_vocabulary );
+    CPPUNIT_ASSERT( e1.m_vocabulary_lookup == e2.m_vocabulary_lookup );
+    CPPUNIT_ASSERT( e1.m_classes == e2.m_classes );
+    CPPUNIT_ASSERT( e1.m_word_classes == e2.m_word_classes );
+    CPPUNIT_ASSERT( e1.m_word_counts == e2.m_word_counts );
+    CPPUNIT_ASSERT( e1.m_word_bigram_counts == e2.m_word_bigram_counts );
+    CPPUNIT_ASSERT( e1.m_word_rev_bigram_counts == e2.m_word_rev_bigram_counts );
+    CPPUNIT_ASSERT( e1.m_class_counts == e2.m_class_counts );
+    CPPUNIT_ASSERT( e1.m_class_bigram_counts == e2.m_class_bigram_counts );
+    CPPUNIT_ASSERT( e1.m_word_class_counts == e2.m_word_class_counts );
+    CPPUNIT_ASSERT( e1.m_class_word_counts == e2.m_class_word_counts );
+}
+
+
 // Test that data is read and things set up properly
 void exchangetest::ExchangeTest1(void)
 {
@@ -67,6 +86,8 @@ void exchangetest::ExchangeTest2(void)
 
     vector<int> orig_class_counts = e.m_class_counts;
     vector<map<int, int> > orig_class_bigram_counts = e.m_class_bigram_counts;
+    vector<map<int, int> > orig_class_word_counts = e.m_class_word_counts;
+    vector<map<int, int> > orig_word_class_counts = e.m_word_class_counts;
 
     int widx = e.m_vocabulary_lookup["d"];
     int curr_class = e.m_word_classes[widx];
@@ -76,16 +97,46 @@ void exchangetest::ExchangeTest2(void)
 
     CPPUNIT_ASSERT( orig_class_counts != e.m_class_counts );
     CPPUNIT_ASSERT( orig_class_bigram_counts != e.m_class_bigram_counts );
+    CPPUNIT_ASSERT( orig_class_word_counts != e.m_class_word_counts );
+    CPPUNIT_ASSERT( orig_word_class_counts != e.m_word_class_counts );
 
     e.do_exchange(widx, new_class, curr_class);
 
     CPPUNIT_ASSERT( orig_class_counts == e.m_class_counts );
     CPPUNIT_ASSERT( orig_class_bigram_counts == e.m_class_bigram_counts );
+    CPPUNIT_ASSERT( orig_class_word_counts == e.m_class_word_counts );
+    CPPUNIT_ASSERT( orig_word_class_counts == e.m_word_class_counts );
+}
+
+
+// Another test for count updates
+void exchangetest::ExchangeTest3(void)
+{
+    cerr << endl;
+
+    Exchange e_ref(2);
+    e_ref.read_corpus("test/corpus1.txt");
+    e_ref.initialize_classes();
+
+    int widx = e_ref.m_vocabulary_lookup["d"];
+    int curr_class = e_ref.m_word_classes[widx];
+    int new_class = (curr_class == 3) ? 2 : 3;
+
+    e_ref.m_classes[curr_class].erase(widx);
+    e_ref.m_classes[new_class].insert(widx);
+    e_ref.m_word_classes[widx] = new_class;
+
+    e_ref.set_class_counts();
+
+    Exchange e_test(2, "test/corpus1.txt");
+    e_test.do_exchange(widx, curr_class, new_class);
+
+    assert_same( e_ref, e_test );
 }
 
 
 // Test for evaluating ll change for one exchange
-void exchangetest::ExchangeTest3(void)
+void exchangetest::ExchangeTest4(void)
 {
     cerr << endl;
     Exchange e(2, "test/corpus1.txt");
@@ -104,7 +155,7 @@ void exchangetest::ExchangeTest3(void)
 
 
 // Test for checking evaluation time
-void exchangetest::ExchangeTest4(void)
+void exchangetest::ExchangeTest5(void)
 {
     cerr << endl;
     Exchange e(2, "test/corpus1.txt");

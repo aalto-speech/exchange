@@ -13,7 +13,7 @@
 
 class Exchange {
 public:
-    Exchange(int num_classes) : m_num_classes(num_classes) { };
+    Exchange(int num_classes) : m_num_classes(num_classes+2) { };
     Exchange(int num_classes, std::string fname);
     ~Exchange() { };
 
@@ -45,6 +45,9 @@ private:
 
     std::vector<int> m_class_counts;
     std::vector<std::map<int, int> > m_class_bigram_counts;
+
+    std::vector<std::map<int, int> > m_class_word_counts;
+    std::vector<std::map<int, int> > m_word_class_counts;
 };
 
 

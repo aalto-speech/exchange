@@ -101,6 +101,9 @@ Exchange::set_class_counts()
 {
     m_class_counts.resize(m_num_classes, 0);
     m_class_bigram_counts.resize(m_num_classes);
+    m_class_word_counts.resize(m_num_classes);
+    m_word_class_counts.resize(m_vocabulary.size());
+
     for (unsigned int i=0; i<m_word_counts.size(); i++)
         m_class_counts[m_word_classes[i]] += m_word_counts[i];
     for (unsigned int i=0; i<m_word_bigram_counts.size(); i++) {
@@ -109,6 +112,8 @@ Exchange::set_class_counts()
         for (auto bgit = curr_bigram_ctxt.begin(); bgit != curr_bigram_ctxt.end(); ++bgit) {
             int tgt_class = m_word_classes[bgit->first];
             m_class_bigram_counts[src_class][tgt_class] += bgit->second;
+            m_class_word_counts[src_class][bgit->first] += bgit->second;
+            m_word_class_counts[i][tgt_class] += bgit->second;
         }
     }
 }
@@ -194,6 +199,8 @@ Exchange::do_exchange(int word,
         int tgt_class = m_word_classes[wit->first];
         m_class_bigram_counts[prev_class][tgt_class] -= wit->second;
         m_class_bigram_counts[new_class][tgt_class] += wit->second;
+        m_class_word_counts[prev_class][wit->first] -= wit->second;
+        m_class_word_counts[new_class][wit->first] += wit->second;
     }
 
     map<int, int> &rbctxt = m_word_rev_bigram_counts[word];
@@ -202,12 +209,18 @@ Exchange::do_exchange(int word,
         int src_class = m_word_classes[wit->first];
         m_class_bigram_counts[src_class][prev_class] -= wit->second;
         m_class_bigram_counts[src_class][new_class] += wit->second;
+        m_word_class_counts[wit->first][prev_class] -= wit->second;
+        m_word_class_counts[wit->first][new_class] += wit->second;
     }
 
     auto wit = bctxt.find(word);
     if (wit != bctxt.end()) {
         m_class_bigram_counts[prev_class][prev_class] -= wit->second;
         m_class_bigram_counts[new_class][new_class] += wit->second;
+        m_class_word_counts[prev_class][word] -= wit->second;
+        m_class_word_counts[new_class][word] += wit->second;
+        m_word_class_counts[word][prev_class] -= wit->second;
+        m_word_class_counts[word][new_class] += wit->second;
     }
 
     m_classes[prev_class].erase(word);

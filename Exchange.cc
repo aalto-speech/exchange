@@ -8,17 +8,22 @@
 
 #include "Exchange.hh"
 #include "io.hh"
+#include "defs.hh"
 
 using namespace std;
 
 
 Exchange::Exchange(int num_classes,
                    string fname,
-                   string vocab_fname)
+                   string vocab_fname,
+                   string class_fname)
     : m_num_classes(num_classes+2)
 {
     read_corpus(fname, vocab_fname);
-    initialize_classes();
+    if (class_fname.length())
+        read_class_initialization(class_fname);
+    else
+        initialize_classes_by_random();
     set_class_counts();
 }
 
@@ -133,7 +138,7 @@ Exchange::write_classes(string fname) const
 
 
 void
-Exchange::initialize_classes()
+Exchange::initialize_classes_by_random()
 {
     multimap<int, int> sorted_words;
     for (unsigned int i=0; i<m_word_counts.size(); ++i) {
@@ -162,6 +167,34 @@ Exchange::initialize_classes()
     m_classes[START_CLASS].insert(m_vocabulary_lookup["<s>"]);
     m_classes[START_CLASS].insert(m_vocabulary_lookup["</s>"]);
     m_classes[UNK_CLASS].insert(m_vocabulary_lookup["<unk>"]);
+}
+
+
+void
+Exchange::read_class_initialization(string class_fname)
+{
+    cerr << "Reading class initialization from " << class_fname << endl;
+    m_word_classes.resize(m_vocabulary.size());
+
+    SimpleFileInput classf(class_fname);
+    string line;
+    while (classf.getline(line)) {
+        if (!line.length()) continue;
+        size_t pos = line.find_first_of(":");
+        int class_idx = str2int(line.substr(0, pos));
+        string words = line.substr(pos+2);
+        stringstream wordss(words);
+        string token;
+
+        m_classes.resize(m_classes.size()+1);
+        while(std::getline(wordss, token, ',')) {
+            auto vlit = m_vocabulary_lookup.find(token);
+            if (vlit == m_vocabulary_lookup.end()) continue;
+            int widx = vlit->second;
+            m_word_classes[widx] = class_idx;
+            m_classes.back().insert(widx);
+        }
+    }
 }
 
 

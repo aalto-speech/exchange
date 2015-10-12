@@ -380,10 +380,15 @@ double
 Exchange::iterate(int max_iter,
                   int max_seconds,
                   int ll_print_interval,
+                  int model_write_interval,
+                  string model_base,
                   int num_threads)
 {
     time_t start_time, curr_time;
+    time_t last_model_write_time;
     start_time = time(0);
+    last_model_write_time = start_time;
+    int tmp_model_idx = 1;
 
     int curr_iter = 0;
     while (true) {
@@ -429,8 +434,17 @@ Exchange::iterate(int max_iter,
 
             if (widx % 1000 == 0) {
                 curr_time = time(0);
+
                 if (curr_time-start_time > max_seconds)
                     return log_likelihood();
+
+                if (model_write_interval > 0 && curr_time-last_model_write_time > model_write_interval) {
+                    string temp_base = model_base + ".temp" + int2str(tmp_model_idx);
+                    write_word_classes(temp_base + ".cgenprobs.gz");
+                    write_classes(temp_base + ".classes.gz");
+                    last_model_write_time = curr_time;
+                    tmp_model_idx++;
+                }
             }
         }
 

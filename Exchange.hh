@@ -37,6 +37,8 @@ public:
     double iterate(int max_iter=0,
                    int max_seconds=0,
                    int ll_print_interval=0,
+                   int model_write_interval=0,
+                   std::string model_base="",
                    int num_threads=1);
 
     void evaluate_thr(int num_threads,

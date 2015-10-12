@@ -31,7 +31,21 @@ public:
                      int new_class);
     double iterate(int max_iter=0,
                    int max_seconds=0,
-                   int ll_print_interval=0);
+                   int ll_print_interval=0,
+                   int num_threads=1);
+
+    void evaluate_thr(int num_threads,
+                      int word_index,
+                      int curr_class,
+                      int &best_class,
+                      double &best_ll_diff);
+    void evaluate_thr_worker(int num_threads,
+                             int thread_index,
+                             int word_index,
+                             int curr_class,
+                             int &best_class,
+                             double &best_ll_diff);
+
 
 private:
 

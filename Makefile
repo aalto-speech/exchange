@@ -25,7 +25,7 @@ all: $(progs) $(test_progs)
 	$(CXX) -c $(cxxflags) $< -o $@
 
 $(progs): %: %.o $(objs)
-	$(CXX) $(cxxflags) $< -o $@ $(objs) -lz
+	$(CXX) $(cxxflags) $< -o $@ $(objs) -lz -pthread
 
 %: %.o $(objs)
 	$(CXX) $(cxxflags) $< -o $@ $(objs) -lz

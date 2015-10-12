@@ -3,6 +3,8 @@
 #include <ctime>
 #include <thread>
 #include <functional>
+#include <iterator>
+#include <algorithm>
 
 #include "Exchange.hh"
 #include "io.hh"
@@ -10,27 +12,46 @@
 using namespace std;
 
 
-Exchange::Exchange(int num_classes, std::string fname)
+Exchange::Exchange(int num_classes,
+                   string fname,
+                   string vocab_fname)
     : m_num_classes(num_classes+2)
 {
-    read_corpus(fname);
+    read_corpus(fname, vocab_fname);
     initialize_classes();
     set_class_counts();
 }
 
 
 void
-Exchange::read_corpus(string fname)
+Exchange::read_corpus(string fname,
+                      string vocab_fname)
 {
     string line;
 
     cerr << "Reading vocabulary..";
-    SimpleFileInput corpusf(fname);
     set<string> word_types;
+    SimpleFileInput corpusf(fname);
     while (corpusf.getline(line)) {
         stringstream ss(line);
         string token;
         while (ss >> token) word_types.insert(token);
+    }
+
+    if (vocab_fname.length()) {
+        set<string> constrained_vocab;
+        SimpleFileInput vocabf(vocab_fname);
+        while (vocabf.getline(line)) {
+            stringstream ss(line);
+            string token;
+            while (ss >> token) constrained_vocab.insert(token);
+        }
+
+        set<string> intersection;
+        set_intersection(word_types.begin(), word_types.end(),
+                         constrained_vocab.begin(), constrained_vocab.end(),
+                         inserter(intersection, intersection.begin()));
+        word_types = intersection;
     }
     cerr << " " << word_types.size() << " words" << endl;
 
@@ -41,6 +62,7 @@ Exchange::read_corpus(string fname)
     m_vocabulary.push_back("<unk>");
     m_vocabulary_lookup["<unk>"] = m_vocabulary.size() - 1;
     for (auto wit=word_types.begin(); wit != word_types.end(); ++wit) {
+        if (wit->find("<") != string::npos) continue;
         m_vocabulary.push_back(*wit);
         m_vocabulary_lookup[*wit] = m_vocabulary.size() - 1;
     }
@@ -58,7 +80,11 @@ Exchange::read_corpus(string fname)
         string token;
 
         sent.push_back(m_vocabulary_lookup["<s>"]);
-        while (ss >> token) sent.push_back(m_vocabulary_lookup[token]);
+        while (ss >> token) {
+            if (m_vocabulary_lookup.find(token) != m_vocabulary_lookup.end())
+                sent.push_back(m_vocabulary_lookup[token]);
+            else sent.push_back(m_vocabulary_lookup["<unk>"]);
+        }
         sent.push_back(m_vocabulary_lookup["</s>"]);
 
         for (unsigned int i=0; i<sent.size(); i++)

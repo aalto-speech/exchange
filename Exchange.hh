@@ -14,10 +14,13 @@
 class Exchange {
 public:
     Exchange(int num_classes) : m_num_classes(num_classes+2) { };
-    Exchange(int num_classes, std::string fname);
+    Exchange(int num_classes,
+             std::string fname,
+             std::string vocab_fname="");
     ~Exchange() { };
 
-    void read_corpus(std::string fname);
+    void read_corpus(std::string fname,
+                     std::string vocab_fname="");
     void write_word_classes(std::string fname) const;
     void write_classes(std::string fname) const;
     void initialize_classes();

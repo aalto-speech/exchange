@@ -18,6 +18,7 @@ int main(int argc, char* argv[])
         ('m', "max-time=INT", "arg", "100000", "Optimization time limit, default: 100000 (seconds)")
         ('t', "num-threads=INT", "arg", "1", "Number of threads, default: 1")
         ('p', "ll-print-interval=INT", "arg", "100000", "Likelihood print interval, default: 100000 (words)")
+        ('v', "vocabulary=FILE", "arg", "", "Vocabulary, one word per line")
         ('h', "help", "", "", "display help");
         config.default_parse(argc, argv);
         if (config.arguments.size() != 2) config.print_help(stderr, 1);
@@ -26,11 +27,12 @@ int main(int argc, char* argv[])
         int max_seconds = config["max-time"].get_int();
         int ll_print_interval = config["ll-print-interval"].get_int();
         int num_threads = config["num-threads"].get_int();
+        string vocab_fname = config["vocabulary"].get_str();
 
         string corpus_fname = config.arguments[0];
         string model_fname = config.arguments[1];
 
-        Exchange e(num_classes, corpus_fname);
+        Exchange e(num_classes, corpus_fname, vocab_fname);
 
         cout << "log likelihood: " << e.log_likelihood() << endl;
 

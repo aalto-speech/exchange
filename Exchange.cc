@@ -288,31 +288,23 @@ Exchange::evaluate_exchange_2(int word,
     if (scit != wb_ctxt.end()) self_count = scit->second;
 
     int curr_count = m_class_bigram_counts[curr_class][tentative_class];
-    int new_count = curr_count;
-    new_count -= get_count(wc_counts, tentative_class);
-    new_count += get_count(cw_counts, curr_class);
-    new_count -= self_count;
+    int new_count = curr_count - get_count(wc_counts, tentative_class)
+            + get_count(cw_counts, curr_class) - self_count;
     evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[tentative_class][curr_class];
-    new_count = curr_count;
-    new_count -= get_count(cw_counts, tentative_class);
-    new_count += get_count(wc_counts, curr_class);
-    new_count -= self_count;
+    new_count = curr_count - get_count(cw_counts, tentative_class)
+            + get_count(wc_counts, curr_class) - self_count;
     evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[curr_class][curr_class];
-    new_count = curr_count;
-    new_count -= get_count(wc_counts, curr_class);
-    new_count -= get_count(cw_counts, curr_class);
-    new_count += self_count;
+    new_count = curr_count - get_count(wc_counts, curr_class)
+            - get_count(cw_counts, curr_class) + self_count;
     evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     curr_count = m_class_bigram_counts[tentative_class][tentative_class];
-    new_count = curr_count;
-    new_count += get_count(wc_counts, tentative_class);
-    new_count += get_count(cw_counts, tentative_class);
-    new_count += self_count;
+    new_count = curr_count + get_count(wc_counts, tentative_class)
+            + get_count(cw_counts, tentative_class) + self_count;
     evaluate_ll_diff(ll_diff, curr_count, new_count);
 
     return ll_diff;

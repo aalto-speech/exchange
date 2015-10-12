@@ -348,7 +348,7 @@ Exchange::iterate(int max_iter,
                 }
             }
 
-            if (best_class == -1) {
+            if (best_class == -1 || best_ll_diff == -1e20) {
                 cerr << "problem in word: " << m_vocabulary[widx] << endl;
                 exit(1);
             }

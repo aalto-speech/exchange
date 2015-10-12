@@ -51,7 +51,7 @@ private:
     std::vector<std::map<int, int> > m_word_rev_bigram_counts;
 
     std::vector<int> m_class_counts;
-    std::vector<std::map<int, int> > m_class_bigram_counts;
+    std::vector<std::vector<int> > m_class_bigram_counts;
 
     std::vector<std::map<int, int> > m_class_word_counts;
     std::vector<std::map<int, int> > m_word_class_counts;

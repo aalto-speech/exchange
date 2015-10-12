@@ -98,7 +98,7 @@ void exchangetest::ExchangeTest2(void)
     Exchange e(2, "test/corpus1.txt");
 
     vector<int> orig_class_counts = e.m_class_counts;
-    vector<map<int, int> > orig_class_bigram_counts = e.m_class_bigram_counts;
+    vector<vector<int> > orig_class_bigram_counts = e.m_class_bigram_counts;
     vector<map<int, int> > orig_class_word_counts = e.m_class_word_counts;
     vector<map<int, int> > orig_word_class_counts = e.m_word_class_counts;
 

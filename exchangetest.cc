@@ -159,13 +159,11 @@ void exchangetest::ExchangeTest4(void)
     int new_class = (curr_class == 3) ? 2 : 3;
 
     double evaluated_ll_diff = e.evaluate_exchange(widx, curr_class, new_class);
-    double evaluated_ll_diff_2 = e.evaluate_exchange_2(widx, curr_class, new_class);
     double orig_ll = e.log_likelihood();
     e.do_exchange(widx, curr_class, new_class);
     double ref_ll = e.log_likelihood();
 
     CPPUNIT_ASSERT_EQUAL( orig_ll+evaluated_ll_diff, ref_ll );
-    CPPUNIT_ASSERT_EQUAL( orig_ll+evaluated_ll_diff_2, ref_ll );
 }
 
 
@@ -182,7 +180,7 @@ void exchangetest::ExchangeTest5(void)
     time_t t1, t2;
     t1 = time(0);
     for (int i=0; i<5000000; i++)
-        e.evaluate_exchange_2(widx, curr_class, new_class);
+        e.evaluate_exchange(widx, curr_class, new_class);
     t2 = time(0);
     cerr << "Seconds elapsed: " << (t2-t1) << endl;
     CPPUNIT_ASSERT( (t2-t1) < 5 );

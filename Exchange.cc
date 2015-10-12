@@ -184,54 +184,6 @@ evaluate_ll_diff(double &ll_diff,
 }
 
 
-double
-Exchange::evaluate_exchange(int word,
-                            int curr_class,
-                            int tentative_class) const
-{
-    double ll_diff = 0.0;
-    int wc = m_word_counts[word];
-
-    ll_diff += 2 * (m_class_counts[curr_class]) * log(m_class_counts[curr_class]);
-    ll_diff -= 2 * (m_class_counts[curr_class]-wc) * log(m_class_counts[curr_class]-wc);
-    ll_diff += 2 * (m_class_counts[tentative_class]) * log(m_class_counts[tentative_class]);
-    ll_diff -= 2 * (m_class_counts[tentative_class]+wc) * log(m_class_counts[tentative_class]+wc);
-
-    map<pair<int, int>, int> count_diffs;
-    const map<int, int> &bctxt = m_word_bigram_counts.at(word);
-    for (auto wit = bctxt.begin(); wit != bctxt.end(); ++wit) {
-        if (wit->first == word) continue;
-        int tgt_class = m_word_classes[wit->first];
-        count_diffs[make_pair(curr_class, tgt_class)] -= wit->second;
-        count_diffs[make_pair(tentative_class, tgt_class)] += wit->second;
-    }
-
-    const map<int, int> &rbctxt = m_word_rev_bigram_counts.at(word);
-    for (auto wit = rbctxt.begin(); wit != rbctxt.end(); ++wit) {
-        if (wit->first == word) continue;
-        int src_class = m_word_classes[wit->first];
-        count_diffs[make_pair(src_class, curr_class)] -= wit->second;
-        count_diffs[make_pair(src_class, tentative_class)] += wit->second;
-    }
-
-    auto wit = bctxt.find(word);
-    if (wit != bctxt.end()) {
-        count_diffs[make_pair(curr_class,curr_class)] -= wit->second;
-        count_diffs[make_pair(tentative_class,tentative_class)] += wit->second;
-    }
-
-    for (auto cdit=count_diffs.begin(); cdit != count_diffs.end(); ++cdit) {
-        int src_class = cdit->first.first;
-        int tgt_class = cdit->first.second;
-        int curr_count = m_class_bigram_counts[src_class][tgt_class];
-        int new_count = curr_count + cdit->second;
-        evaluate_ll_diff(ll_diff, curr_count, new_count);
-    }
-
-    return ll_diff;
-}
-
-
 inline int get_count(const map<int, int> &ctxt,
                      int element)
 {
@@ -242,9 +194,9 @@ inline int get_count(const map<int, int> &ctxt,
 
 
 double
-Exchange::evaluate_exchange_2(int word,
-                              int curr_class,
-                              int tentative_class) const
+Exchange::evaluate_exchange(int word,
+                            int curr_class,
+                            int tentative_class) const
 {
     double ll_diff = 0.0;
     int wc = m_word_counts[word];
@@ -377,7 +329,7 @@ Exchange::iterate(int max_iter,
 
             for (int cidx=2; cidx<(int)m_classes.size(); cidx++) {
                 if (cidx == curr_class) continue;
-                double ll_diff = evaluate_exchange_2(widx, curr_class, cidx);
+                double ll_diff = evaluate_exchange(widx, curr_class, cidx);
                 if (ll_diff > best_ll_diff) {
                     best_ll_diff = ll_diff;
                     best_class = cidx;

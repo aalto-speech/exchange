@@ -74,18 +74,24 @@ Exchange::read_corpus(string fname,
     m_word_rev_bigram_counts.resize(m_vocabulary.size());
     SimpleFileInput corpusf2(fname);
     int num_tokens = 0;
+
+    int ss_idx = m_vocabulary_lookup["<s>"];
+    int se_idx = m_vocabulary_lookup["</s>"];
+    int unk_idx = m_vocabulary_lookup["<unk>"];
+
     while (corpusf2.getline(line)) {
         vector<int> sent;
         stringstream ss(line);
         string token;
 
-        sent.push_back(m_vocabulary_lookup["<s>"]);
+        sent.push_back(ss_idx);
         while (ss >> token) {
-            if (m_vocabulary_lookup.find(token) != m_vocabulary_lookup.end())
-                sent.push_back(m_vocabulary_lookup[token]);
-            else sent.push_back(m_vocabulary_lookup["<unk>"]);
+            auto vlit = m_vocabulary_lookup.find(token);
+            if (vlit != m_vocabulary_lookup.end())
+                sent.push_back(vlit->second);
+            else sent.push_back(unk_idx);
         }
-        sent.push_back(m_vocabulary_lookup["</s>"]);
+        sent.push_back(se_idx);
 
         for (unsigned int i=0; i<sent.size(); i++)
             m_word_counts[sent[i]]++;
@@ -200,7 +206,7 @@ Exchange::log_likelihood() const
 }
 
 
-void inline
+inline void
 evaluate_ll_diff(double &ll_diff,
                  int old_count,
                  int new_count)
@@ -212,7 +218,8 @@ evaluate_ll_diff(double &ll_diff,
 }
 
 
-inline int get_count(const map<int, int> &ctxt,
+inline int
+get_count(const map<int, int> &ctxt,
                      int element)
 {
     auto it = ctxt.find(element);

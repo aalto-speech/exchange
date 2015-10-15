@@ -16,14 +16,15 @@ using namespace std;
 Exchange::Exchange(int num_classes,
                    string fname,
                    string vocab_fname,
-                   string class_fname)
+                   string class_fname,
+                   unsigned int top_word_classes)
     : m_num_classes(num_classes+2)
 {
     read_corpus(fname, vocab_fname);
     if (class_fname.length())
         read_class_initialization(class_fname);
     else
-        initialize_classes_by_random();
+        initialize_classes_by_random(top_word_classes);
     set_class_counts();
 }
 
@@ -138,7 +139,7 @@ Exchange::write_classes(string fname) const
 
 
 void
-Exchange::initialize_classes_by_random()
+Exchange::initialize_classes_by_random(unsigned int top_word_classes)
 {
     multimap<int, int> sorted_words;
     for (unsigned int i=0; i<m_word_counts.size(); ++i) {
@@ -147,18 +148,28 @@ Exchange::initialize_classes_by_random()
     }
 
     m_classes.resize(m_num_classes);
-    m_word_classes.resize(m_vocabulary.size());
-    unsigned int class_idx_helper = 2;
+    m_word_classes.resize(m_vocabulary.size(), -1);
+
+    if (top_word_classes > 0) {
+        unsigned int widx = 0;
+        for (auto swit=sorted_words.rbegin(); swit != sorted_words.rend(); ++swit) {
+            m_word_classes[swit->second] = widx+2;
+            m_classes[widx+2].insert(swit->second);
+            if (++widx >= top_word_classes) break;
+        }
+    }
+
+    unsigned int class_idx_helper = 2 + top_word_classes;
     for (auto swit=sorted_words.rbegin(); swit != sorted_words.rend(); ++swit) {
+        if (m_word_classes[swit->second] != -1) continue;
+
         unsigned int class_idx = class_idx_helper % m_num_classes;
         m_word_classes[swit->second] = class_idx;
         m_classes[class_idx].insert(swit->second);
 
         class_idx_helper++;
-        while (class_idx_helper % m_num_classes == START_CLASS ||
-               class_idx_helper % m_num_classes == UNK_CLASS)
+        while (class_idx_helper % m_num_classes < (2 + top_word_classes))
             class_idx_helper++;
-
     }
 
     m_word_classes[m_vocabulary_lookup["<s>"]] = START_CLASS;
@@ -398,6 +409,7 @@ Exchange::iterate(int max_iter,
                 m_word_classes[widx] == UNK_CLASS) continue;
 
             int curr_class = m_word_classes[widx];
+            if (m_classes[curr_class].size() == 1) continue;
             int best_class = -1;
             double best_ll_diff = -1e20;
 
@@ -427,7 +439,8 @@ Exchange::iterate(int max_iter,
             if (best_ll_diff > 0.0)
                 do_exchange(widx, curr_class, best_class);
 
-            if (ll_print_interval > 0 && widx % ll_print_interval == 0) {
+            if ((ll_print_interval > 0 && widx % ll_print_interval == 0)
+                || widx+1 == (int)m_vocabulary.size()) {
                 double ll = log_likelihood();
                 cerr << "log likelihood: " << ll << endl;
             }

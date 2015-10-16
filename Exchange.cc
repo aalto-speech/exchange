@@ -68,7 +68,7 @@ Exchange::read_corpus(string fname,
     m_vocabulary.push_back("<unk>");
     m_vocabulary_lookup["<unk>"] = m_vocabulary.size() - 1;
     for (auto wit=word_types.begin(); wit != word_types.end(); ++wit) {
-        if (wit->find("<") != string::npos) continue;
+        if (wit->find("<") != string::npos && *wit != "<w>") continue;
         m_vocabulary.push_back(*wit);
         m_vocabulary_lookup[*wit] = m_vocabulary.size() - 1;
     }
@@ -128,10 +128,11 @@ Exchange::write_class_mem_probs(string fname) const
     mfo << "<s>\t" << START_CLASS << " " << "0.000000" << "\n";
     mfo << "<unk>\t" << UNK_CLASS << " " << "0.000000" << "\n";
     for (unsigned int widx = 0; widx < m_vocabulary.size(); widx++) {
-        if (m_vocabulary[widx].find("<") != string::npos) continue;
+        string word = m_vocabulary[widx];
+        if (word.find("<") != string::npos && word != "<w>") continue;
         double lp = log(m_word_counts[widx]);
         lp -= log(m_class_counts[m_word_classes[widx]]);
-        mfo << m_vocabulary[widx] << "\t" << m_word_classes[widx] << " " << lp << "\n";
+        mfo << word << "\t" << m_word_classes[widx] << " " << lp << "\n";
     }
     mfo.close();
 }
@@ -159,7 +160,7 @@ Exchange::initialize_classes_by_random(unsigned int top_word_classes)
 {
     multimap<int, int> sorted_words;
     for (unsigned int i=0; i<m_word_counts.size(); ++i) {
-        if (m_vocabulary[i].find("<") != string::npos) continue;
+        if (m_vocabulary[i].find("<") != string::npos && m_vocabulary[i] != "<w>") continue;
         sorted_words.insert(make_pair(m_word_counts[i], i));
     }
 

@@ -24,6 +24,7 @@ public:
     void read_corpus(std::string fname,
                      std::string vocab_fname="");
     void write_word_classes(std::string fname) const;
+    void write_class_mem_probs(std::string fname) const;
     void write_classes(std::string fname) const;
     void initialize_classes_by_random(unsigned int top_word_classes=0);
     void read_class_initialization(std::string class_fname);

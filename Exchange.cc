@@ -122,6 +122,22 @@ Exchange::write_word_classes(string fname) const
 
 
 void
+Exchange::write_class_mem_probs(string fname) const
+{
+    SimpleFileOutput mfo(fname);
+    mfo << "<s>\t" << START_CLASS << " " << "0.000000" << "\n";
+    mfo << "<unk>\t" << UNK_CLASS << " " << "0.000000" << "\n";
+    for (unsigned int widx = 0; widx < m_vocabulary.size(); widx++) {
+        if (m_vocabulary[widx].find("<") != string::npos) continue;
+        double lp = log(m_word_counts[widx]);
+        lp -= log(m_class_counts[m_word_classes[widx]]);
+        mfo << m_vocabulary[widx] << "\t" << m_word_classes[widx] << " " << lp << "\n";
+    }
+    mfo.close();
+}
+
+
+void
 Exchange::write_classes(string fname) const
 {
     SimpleFileOutput mfo(fname);
@@ -454,6 +470,7 @@ Exchange::iterate(int max_iter,
                 if (model_write_interval > 0 && curr_time-last_model_write_time > model_write_interval) {
                     string temp_base = model_base + ".temp" + int2str(tmp_model_idx);
                     write_word_classes(temp_base + ".cgenprobs.gz");
+                    write_class_mem_probs(temp_base + ".cmemprobs.gz");
                     write_classes(temp_base + ".classes.gz");
                     last_model_write_time = curr_time;
                     tmp_model_idx++;

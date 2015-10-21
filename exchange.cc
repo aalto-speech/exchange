@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 {
     try {
         conf::Config config;
-        config("usage: train [OPTION...] CORPUS MODEL\n")
+        config("usage: exchange [OPTION...] CORPUS MODEL\n")
         ('c', "num-classes=INT", "arg", "1000", "Number of classes, default: 1000")
         ('m', "max-time=INT", "arg", "100000", "Optimization time limit, default: 100000 (seconds)")
         ('t', "num-threads=INT", "arg", "1", "Number of threads, default: 1")

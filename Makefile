@@ -3,7 +3,7 @@ cxxflags = -O3 -DNDEBUG -std=gnu++0x -Wall -Wno-write-strings -Wno-unused-functi
 
 ##################################################
 
-progs = train
+progs = exchange
 progs_srcs = $(progs:=.cc)
 progs_objs = $(progs:=.o)
 srcs = conf.cc io.cc Exchange.cc

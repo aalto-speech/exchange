@@ -17,15 +17,20 @@ Exchange::Exchange(int num_classes,
                    string fname,
                    string vocab_fname,
                    string class_fname,
-                   unsigned int top_word_classes)
-    : m_num_classes(num_classes+2)
+                   unsigned int top_word_classes,
+                   bool word_boundary)
+    : m_num_classes(num_classes+2),
+      m_word_boundary(word_boundary)
 {
-    read_corpus(fname, vocab_fname);
-    if (class_fname.length())
-        read_class_initialization(class_fname);
-    else
-        initialize_classes_by_random(top_word_classes);
-    set_class_counts();
+    m_num_special_classes = word_boundary ? 3 : 2;
+    if (fname.length()) {
+        read_corpus(fname, vocab_fname);
+        if (class_fname.length())
+            read_class_initialization(class_fname);
+        else
+            initialize_classes_by_random(top_word_classes);
+        set_class_counts();
+    }
 }
 
 
@@ -92,6 +97,7 @@ Exchange::read_corpus(string fname,
 
         sent.push_back(ss_idx);
         while (ss >> token) {
+            if (m_word_boundary && token == "<w>") continue;
             auto vlit = m_vocabulary_lookup.find(token);
             if (vlit != m_vocabulary_lookup.end())
                 sent.push_back(vlit->second);
@@ -127,9 +133,12 @@ Exchange::write_class_mem_probs(string fname) const
     SimpleFileOutput mfo(fname);
     mfo << "<s>\t" << START_CLASS << " " << "0.000000" << "\n";
     mfo << "<unk>\t" << UNK_CLASS << " " << "0.000000" << "\n";
+    if (m_word_boundary) mfo << "<w>\t" << WB_CLASS << " " << "0.000000" << "\n";
+
     for (unsigned int widx = 0; widx < m_vocabulary.size(); widx++) {
         string word = m_vocabulary[widx];
         if (word.find("<") != string::npos && word != "<w>") continue;
+        if (m_word_boundary && word == "<w>") continue;
         double lp = log(m_word_counts[widx]);
         lp -= log(m_class_counts[m_word_classes[widx]]);
         mfo << word << "\t" << m_word_classes[widx] << " " << lp << "\n";
@@ -170,13 +179,13 @@ Exchange::initialize_classes_by_random(unsigned int top_word_classes)
     if (top_word_classes > 0) {
         unsigned int widx = 0;
         for (auto swit=sorted_words.rbegin(); swit != sorted_words.rend(); ++swit) {
-            m_word_classes[swit->second] = widx+2;
-            m_classes[widx+2].insert(swit->second);
+            m_word_classes[swit->second] = widx + m_num_special_classes;
+            m_classes[widx+m_num_special_classes].insert(swit->second);
             if (++widx >= top_word_classes) break;
         }
     }
 
-    unsigned int class_idx_helper = 2 + top_word_classes;
+    unsigned int class_idx_helper = m_num_special_classes + top_word_classes;
     for (auto swit=sorted_words.rbegin(); swit != sorted_words.rend(); ++swit) {
         if (m_word_classes[swit->second] != -1) continue;
 
@@ -185,7 +194,7 @@ Exchange::initialize_classes_by_random(unsigned int top_word_classes)
         m_classes[class_idx].insert(swit->second);
 
         class_idx_helper++;
-        while (class_idx_helper % m_num_classes < (2 + top_word_classes))
+        while (class_idx_helper % m_num_classes < (m_num_special_classes + top_word_classes))
             class_idx_helper++;
     }
 
@@ -195,6 +204,10 @@ Exchange::initialize_classes_by_random(unsigned int top_word_classes)
     m_classes[START_CLASS].insert(m_vocabulary_lookup["<s>"]);
     m_classes[START_CLASS].insert(m_vocabulary_lookup["</s>"]);
     m_classes[UNK_CLASS].insert(m_vocabulary_lookup["<unk>"]);
+    if (m_word_boundary) {
+        m_word_classes[m_vocabulary_lookup["<w>"]] = WB_CLASS;
+        m_classes[WB_CLASS].insert(m_vocabulary_lookup["<w>"]);
+    }
 }
 
 
@@ -425,6 +438,8 @@ Exchange::iterate(int max_iter,
             if (m_word_classes[widx] == START_CLASS ||
                 m_word_classes[widx] == UNK_CLASS) continue;
 
+            if (m_word_boundary && m_word_classes[widx] == WB_CLASS) continue;
+
             int curr_class = m_word_classes[widx];
             if (m_classes[curr_class].size() == 1) continue;
             int best_class = -1;
@@ -438,7 +453,7 @@ Exchange::iterate(int max_iter,
                              best_ll_diff);
             }
             else {
-                for (int cidx=2; cidx<(int)m_classes.size(); cidx++) {
+                for (int cidx=m_num_special_classes; cidx<(int)m_classes.size(); cidx++) {
                     if (cidx == curr_class) continue;
                     double ll_diff = evaluate_exchange(widx, curr_class, cidx);
                     if (ll_diff > best_ll_diff) {
@@ -495,7 +510,7 @@ Exchange::evaluate_thr_worker(int num_threads,
                               int &best_class,
                               double &best_ll_diff)
 {
-    for (int cidx=2; cidx<(int)m_classes.size(); cidx++) {
+    for (int cidx=m_num_special_classes; cidx<(int)m_classes.size(); cidx++) {
         if (cidx == curr_class) continue;
         if (cidx % num_threads != thread_index) continue;
         double ll_diff = evaluate_exchange(word_index, curr_class, cidx);

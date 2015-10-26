@@ -35,8 +35,8 @@ GZipFileInput::~GZipFileInput()
 bool
 GZipFileInput::getline(string &line)
 {
-    char buffer[131072];
-    char *res = gzgets(gzf, buffer, 131072-1);
+    char buffer[2097152];
+    char *res = gzgets(gzf, buffer, 2097152-1);
     if (res != nullptr) {
         strtok(buffer, "\r\n");
         line.assign(buffer);

@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
         conf::Config config;
         config("usage: exchange [OPTION...] CORPUS MODEL\n")
         ('c', "num-classes=INT", "arg", "1000", "Number of classes, default: 1000")
+        ('a', "max-iter=INT", "arg", "100", "Maximum number of iterations, default: 100 (seconds)")
         ('m', "max-time=INT", "arg", "100000", "Optimization time limit, default: 100000 (seconds)")
         ('t', "num-threads=INT", "arg", "1", "Number of threads, default: 1")
         ('o', "top-words=INT", "arg", "0", "Own class in initialization for most common words, default: 0")
@@ -31,6 +32,7 @@ int main(int argc, char* argv[])
         string model_fname = config.arguments[1];
 
         int num_classes = config["num-classes"].get_int();
+        int max_iter = config["max-iter"].get_int();
         int max_seconds = config["max-time"].get_int();
         int ll_print_interval = config["ll-print-interval"].get_int();
         int num_threads = config["num-threads"].get_int();
@@ -46,7 +48,7 @@ int main(int argc, char* argv[])
         time_t t1,t2;
         t1=time(0);
         cerr << "log likelihood: " << e.log_likelihood() << endl;
-        e.iterate(0, max_seconds, ll_print_interval,
+        e.iterate(max_iter, max_seconds, ll_print_interval,
                   model_write_interval, model_fname, num_threads);
         t2=time(0);
         cerr << "Train run time: " << t2-t1 << " seconds" << endl;

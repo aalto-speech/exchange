@@ -6,7 +6,7 @@
 #include <iterator>
 #include <algorithm>
 
-#include "Exchange.hh"
+#include "ExchangeAlgorithm.hh"
 #include "io.hh"
 #include "defs.hh"
 

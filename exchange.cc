@@ -3,7 +3,7 @@
 #include <ctime>
 
 #include "conf.hh"
-#include "Exchange.hh"
+#include "ExchangeAlgorithm.hh"
 
 
 using namespace std;

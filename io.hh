@@ -23,7 +23,8 @@ class IFStreamInput : public FileInputType
 public:
     IFStreamInput(std::string filename) { ifstr.open(filename, std::ios_base::in); };
     ~IFStreamInput() { ifstr.close(); }
-    bool getline(std::string &line) { return std::getline(ifstr, line); }
+    bool getline(std::string &line) { return (bool)std::getline(ifstr, 
+line); }
 private:
     std::ifstream ifstr;
 };

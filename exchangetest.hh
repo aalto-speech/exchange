@@ -2,7 +2,7 @@
 #define DECODER_WGRAPH_CPPUNIT
 
 #define private public
-#include "Exchange.hh"
+#include "ExchangeAlgorithm.hh"
 #undef private
 
 #include <set>

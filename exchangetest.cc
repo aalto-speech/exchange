@@ -1,27 +1,16 @@
-#include "exchangetest.hh"
+#define BOOST_TEST_MODULE Hello
+#include <boost/test/unit_test.hpp>
 
+#include <iostream>
 #include <vector>
 #include <map>
+#include <ctime>
+
+#define private public
+#include "ExchangeAlgorithm.hh"
+#undef private
 
 using namespace std;
-
-
-CPPUNIT_TEST_SUITE_REGISTRATION (exchangetest);
-
-
-void exchangetest::setUp (void)
-{
-}
-
-
-void exchangetest::tearDown (void)
-{
-}
-
-
-void exchangetest::read_fixtures()
-{
-}
 
 
 void
@@ -52,23 +41,23 @@ void
 assert_same(Exchange &e1,
             Exchange &e2)
 {
-    CPPUNIT_ASSERT( e1.m_num_classes == e2.m_num_classes );
-    CPPUNIT_ASSERT( e1.m_vocabulary == e2.m_vocabulary );
-    CPPUNIT_ASSERT( e1.m_vocabulary_lookup == e2.m_vocabulary_lookup );
-    CPPUNIT_ASSERT( e1.m_classes == e2.m_classes );
-    CPPUNIT_ASSERT( e1.m_word_classes == e2.m_word_classes );
-    CPPUNIT_ASSERT( e1.m_word_counts == e2.m_word_counts );
-    CPPUNIT_ASSERT( e1.m_word_bigram_counts == e2.m_word_bigram_counts );
-    CPPUNIT_ASSERT( e1.m_word_rev_bigram_counts == e2.m_word_rev_bigram_counts );
-    CPPUNIT_ASSERT( e1.m_class_counts == e2.m_class_counts );
-    CPPUNIT_ASSERT( e1.m_class_bigram_counts == e2.m_class_bigram_counts );
-    CPPUNIT_ASSERT( e1.m_word_class_counts == e2.m_word_class_counts );
-    CPPUNIT_ASSERT( e1.m_class_word_counts == e2.m_class_word_counts );
+    BOOST_CHECK( e1.m_num_classes == e2.m_num_classes );
+    BOOST_CHECK( e1.m_vocabulary == e2.m_vocabulary );
+    BOOST_CHECK( e1.m_vocabulary_lookup == e2.m_vocabulary_lookup );
+    BOOST_CHECK( e1.m_classes == e2.m_classes );
+    BOOST_CHECK( e1.m_word_classes == e2.m_word_classes );
+    BOOST_CHECK( e1.m_word_counts == e2.m_word_counts );
+    BOOST_CHECK( e1.m_word_bigram_counts == e2.m_word_bigram_counts );
+    BOOST_CHECK( e1.m_word_rev_bigram_counts == e2.m_word_rev_bigram_counts );
+    BOOST_CHECK( e1.m_class_counts == e2.m_class_counts );
+    BOOST_CHECK( e1.m_class_bigram_counts == e2.m_class_bigram_counts );
+    BOOST_CHECK( e1.m_word_class_counts == e2.m_word_class_counts );
+    BOOST_CHECK( e1.m_class_word_counts == e2.m_class_word_counts );
 }
 
 
 // Test that data is read and things set up properly
-void exchangetest::ExchangeTest1(void)
+BOOST_AUTO_TEST_CASE(DataRead)
 {
     cerr << endl;
 
@@ -77,21 +66,21 @@ void exchangetest::ExchangeTest1(void)
 
     Exchange e(num_classes, "test/corpus1.txt");
 
-    CPPUNIT_ASSERT_EQUAL( num_classes+2, (long unsigned int)e.m_num_classes );
-    CPPUNIT_ASSERT_EQUAL( num_words, e.m_vocabulary.size() );
-    CPPUNIT_ASSERT_EQUAL( num_words, e.m_vocabulary_lookup.size() );
-    CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_classes.size() );
-    CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_classes.size() );
-    CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_counts.size() );
-    CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_bigram_counts.size() );
-    CPPUNIT_ASSERT_EQUAL( num_words, e.m_word_rev_bigram_counts.size() );
-    CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_class_counts.size() );
-    CPPUNIT_ASSERT_EQUAL( num_classes+2, e.m_class_bigram_counts.size() );
+    BOOST_CHECK_EQUAL( num_classes+2, (long unsigned int)e.m_num_classes );
+    BOOST_CHECK_EQUAL( num_words, e.m_vocabulary.size() );
+    BOOST_CHECK_EQUAL( num_words, e.m_vocabulary_lookup.size() );
+    BOOST_CHECK_EQUAL( num_classes+2, e.m_classes.size() );
+    BOOST_CHECK_EQUAL( num_words, e.m_word_classes.size() );
+    BOOST_CHECK_EQUAL( num_words, e.m_word_counts.size() );
+    BOOST_CHECK_EQUAL( num_words, e.m_word_bigram_counts.size() );
+    BOOST_CHECK_EQUAL( num_words, e.m_word_rev_bigram_counts.size() );
+    BOOST_CHECK_EQUAL( num_classes+2, e.m_class_counts.size() );
+    BOOST_CHECK_EQUAL( num_classes+2, e.m_class_bigram_counts.size() );
 }
 
 
 // Test that moving words between classes handles counts correctly
-void exchangetest::ExchangeTest2(void)
+BOOST_AUTO_TEST_CASE(DoExchange)
 {
     cerr << endl;
     Exchange e(2, "test/corpus1.txt");
@@ -107,22 +96,22 @@ void exchangetest::ExchangeTest2(void)
 
     e.do_exchange(widx, curr_class, new_class);
 
-    CPPUNIT_ASSERT( orig_class_counts != e.m_class_counts );
-    CPPUNIT_ASSERT( orig_class_bigram_counts != e.m_class_bigram_counts );
-    CPPUNIT_ASSERT( orig_class_word_counts != e.m_class_word_counts );
-    CPPUNIT_ASSERT( orig_word_class_counts != e.m_word_class_counts );
+    BOOST_CHECK( orig_class_counts != e.m_class_counts );
+    BOOST_CHECK( orig_class_bigram_counts != e.m_class_bigram_counts );
+    BOOST_CHECK( orig_class_word_counts != e.m_class_word_counts );
+    BOOST_CHECK( orig_word_class_counts != e.m_word_class_counts );
 
     e.do_exchange(widx, new_class, curr_class);
 
-    CPPUNIT_ASSERT( orig_class_counts == e.m_class_counts );
-    CPPUNIT_ASSERT( orig_class_bigram_counts == e.m_class_bigram_counts );
-    CPPUNIT_ASSERT( orig_class_word_counts == e.m_class_word_counts );
-    CPPUNIT_ASSERT( orig_word_class_counts == e.m_word_class_counts );
+    BOOST_CHECK( orig_class_counts == e.m_class_counts );
+    BOOST_CHECK( orig_class_bigram_counts == e.m_class_bigram_counts );
+    BOOST_CHECK( orig_class_word_counts == e.m_class_word_counts );
+    BOOST_CHECK( orig_word_class_counts == e.m_word_class_counts );
 }
 
 
 // Another test for count updates
-void exchangetest::ExchangeTest3(void)
+BOOST_AUTO_TEST_CASE(DoExchange2)
 {
     cerr << endl;
 
@@ -148,7 +137,7 @@ void exchangetest::ExchangeTest3(void)
 
 
 // Test for evaluating ll change for one exchange
-void exchangetest::ExchangeTest4(void)
+BOOST_AUTO_TEST_CASE(EvalExchange)
 {
     cerr << endl;
     Exchange e(2, "test/corpus1.txt");
@@ -162,12 +151,12 @@ void exchangetest::ExchangeTest4(void)
     e.do_exchange(widx, curr_class, new_class);
     double ref_ll = e.log_likelihood();
 
-    CPPUNIT_ASSERT_EQUAL( orig_ll+evaluated_ll_diff, ref_ll );
+    BOOST_CHECK_EQUAL( orig_ll+evaluated_ll_diff, ref_ll );
 }
 
 
 // Test for checking evaluation time
-void exchangetest::ExchangeTest5(void)
+BOOST_AUTO_TEST_CASE(EvalExchangeTime)
 {
     cerr << endl;
     Exchange e(2, "test/corpus1.txt");
@@ -182,6 +171,6 @@ void exchangetest::ExchangeTest5(void)
         e.evaluate_exchange(widx, curr_class, new_class);
     t2 = time(0);
     cerr << "Seconds elapsed: " << (t2-t1) << endl;
-    CPPUNIT_ASSERT( (t2-t1) < 5 );
+    BOOST_CHECK( (t2-t1) < 5 );
 }
 

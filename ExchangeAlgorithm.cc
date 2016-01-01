@@ -417,6 +417,14 @@ Exchange::do_exchange(int word,
 }
 
 
+void
+Exchange::do_merge(int class_1,
+                   int class_2)
+{
+
+}
+
+
 double
 Exchange::iterate(int max_iter,
                   int max_seconds,

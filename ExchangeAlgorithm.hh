@@ -37,6 +37,8 @@ public:
     void do_exchange(int word,
                      int prev_class,
                      int new_class);
+    void do_merge(int class_1,
+                  int class_2);
     double iterate(int max_iter=0,
                    int max_seconds=0,
                    int ll_print_interval=0,

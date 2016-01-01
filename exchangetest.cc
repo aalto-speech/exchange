@@ -174,3 +174,29 @@ BOOST_AUTO_TEST_CASE(EvalExchangeTime)
     BOOST_CHECK( (t2-t1) < 5 );
 }
 
+
+// Test for merging two classes
+BOOST_AUTO_TEST_CASE(EvalMerge)
+{
+    cerr << endl;
+
+    Exchange e_ref(3);
+    e_ref.read_corpus("test/corpus1.txt");
+    e_ref.initialize_classes_by_random();
+    e_ref.set_class_counts();
+
+    for (unsigned int i=0; i<e_ref.m_vocabulary.size(); i++)
+        if (e_ref.m_word_classes[i] == 4)
+            e_ref.do_exchange(i, 4, 3);
+    double ref_ll = e_ref.log_likelihood();
+
+    Exchange e_test(3);
+    e_test.read_corpus("test/corpus1.txt");
+    e_test.initialize_classes_by_random();
+    e_test.set_class_counts();
+    e_test.do_merge(3, 4);
+    double test_ll = e_test.log_likelihood();
+
+    BOOST_CHECK_EQUAL(ref_ll, test_ll);
+}
+

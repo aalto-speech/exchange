@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
     config("usage: ngramppl [OPTION...] ARPAFILE INPUT\n")
     ('r', "use-root-node", "", "", "Pass through root node in contexts with unks, DEFAULT: advance with unk symbol")
     ('s', "score-unk-words", "", "", "Score unk words using the <unk> symbol scores")
+    ('w', "num-words=INT", "arg", "", "Number of words for computing word-normalized perplexity")
     ('h', "help", "", "", "display help");
     config.default_parse(argc, argv);
     if (config.arguments.size() != 2) config.print_help(stderr, 1);
@@ -99,7 +100,6 @@ int main(int argc, char* argv[]) {
         num_sents++;
     }
 
-    double ppl = exp(-1.0/double(num_words) * total_ll);
     cerr << endl;
     cerr << "Number of sentences: " << num_sents << endl;
     cerr << "Number of in-vocabulary words exluding sentence ends: " << num_words-num_sents << endl;
@@ -107,6 +107,10 @@ int main(int argc, char* argv[]) {
     cerr << "Number of OOV words: " << num_oov << endl;
     cerr << "Total log likelihood (ln): " << total_ll << endl;
     cerr << "Total log likelihood (log10): " << total_ll/2.302585092994046 << endl;
+
+    if (config["num-words"].specified)
+        num_words = config["num-words"].get_int();
+    double ppl = exp(-1.0/double(num_words) * total_ll);
     cerr << "Perplexity: " << ppl << endl;
 
     exit(0);

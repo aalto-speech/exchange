@@ -3,10 +3,10 @@ cxxflags = -O3 -DNDEBUG -std=gnu++0x -Wall -Wno-unused-function
 
 ##################################################
 
-progs = exchange
+progs = exchange ngramppl classppl classintppl
 progs_srcs = $(progs:=.cc)
 progs_objs = $(progs:=.o)
-srcs = conf.cc io.cc ExchangeAlgorithm.cc
+srcs = conf.cc io.cc Ngram.cc ExchangeAlgorithm.cc
 objs = $(srcs:.cc=.o)
 
 test_progs = runtests

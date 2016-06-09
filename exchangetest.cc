@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(DoExchange2)
 
     Exchange e_ref(2);
     e_ref.read_corpus("test/corpus1.txt");
-    e_ref.initialize_classes_by_random();
+    e_ref.initialize_classes_by_freq();
 
     int widx = e_ref.m_vocabulary_lookup["d"];
     int curr_class = e_ref.m_word_classes[widx];

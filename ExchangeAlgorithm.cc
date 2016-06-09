@@ -28,7 +28,7 @@ Exchange::Exchange(int num_classes,
         if (class_fname.length())
             read_class_initialization(class_fname);
         else
-            initialize_classes_by_random(top_word_classes);
+            initialize_classes_by_freq(top_word_classes);
         set_class_counts();
     }
 }
@@ -165,7 +165,7 @@ Exchange::write_classes(string fname) const
 
 
 void
-Exchange::initialize_classes_by_random(unsigned int top_word_classes)
+Exchange::initialize_classes_by_freq(unsigned int top_word_classes)
 {
     multimap<int, int> sorted_words;
     for (unsigned int i=0; i<m_word_counts.size(); ++i) {

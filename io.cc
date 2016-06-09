@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#define GZIP_BUFFER_SIZE 1048576
+
 using namespace std;
 
 
@@ -10,16 +12,20 @@ SimpleFileInput::SimpleFileInput(string filename)
     if (ends_with(filename, ".gz"))
     {
 #ifndef NO_ZLIB
-        infs = unique_ptr<FileInputType>(new GZipFileInput(filename));
+        infs = new GZipFileInput(filename);
 #else
         cerr << "No ZLIB support" << endl;
         exit(1);
 #endif
     }
     else
-        infs = unique_ptr<FileInputType>(new IFStreamInput(filename));
+        infs = new IFStreamInput(filename);
 }
 
+SimpleFileInput::~SimpleFileInput()
+{
+    if (infs) delete infs;
+}
 
 #ifndef NO_ZLIB
 GZipFileInput::GZipFileInput(string filename)
@@ -35,9 +41,9 @@ GZipFileInput::~GZipFileInput()
 bool
 GZipFileInput::getline(string &line)
 {
-    char buffer[2097152];
-    char *res = gzgets(gzf, buffer, 2097152-1);
-    if (res != nullptr) {
+    char buffer[GZIP_BUFFER_SIZE];
+    char *res = gzgets(gzf, buffer, GZIP_BUFFER_SIZE-1);
+    if (res != NULL) {
         strtok(buffer, "\r\n");
         line.assign(buffer);
         return true;
@@ -52,14 +58,14 @@ SimpleFileOutput::SimpleFileOutput(string filename)
     if (ends_with(filename, ".gz"))
     {
 #ifndef NO_ZLIB
-        outfs = unique_ptr<FileOutputType>(new GZipFileOutput(filename));
+        outfs = new GZipFileOutput(filename);
 #else
         cerr << "No ZLIB support" << endl;
         exit(1);
 #endif
     }
     else
-        outfs = unique_ptr<FileOutputType>(new OFStream(filename));
+        outfs = new OFStream(filename);
 }
 
 SimpleFileOutput::~SimpleFileOutput()
@@ -70,7 +76,11 @@ SimpleFileOutput::~SimpleFileOutput()
 void
 SimpleFileOutput::close()
 {
-    outfs->close();
+    if (outfs) {
+        outfs->close();
+        delete outfs;
+        outfs = NULL;
+    }
 }
 
 
@@ -127,7 +137,7 @@ SimpleFileOutput::operator<<(double dfltn)
 
 OFStream::OFStream(string filename)
 {
-    ofstr.open(filename, ios_base::out);
+    ofstr.open(filename.c_str(), ios_base::out);
 }
 
 OFStream::~OFStream()
@@ -196,7 +206,7 @@ OFStream::operator<<(double dfltn)
 GZipFileOutput::GZipFileOutput(string filename)
 {
     gzf = gzopen(filename.c_str(), "w");
-    open = true;
+    file_open = true;
 }
 
 GZipFileOutput::~GZipFileOutput()
@@ -207,14 +217,17 @@ GZipFileOutput::~GZipFileOutput()
 void
 GZipFileOutput::close()
 {
-    if (open) gzclose(gzf);
-    open = false;
+    if (file_open) {
+         gzclose(gzf);
+         gzf = NULL;
+    }
+    file_open = false;
 }
 
 GZipFileOutput&
 GZipFileOutput::operator<<(const std::string &str)
 {
-    gzprintf(gzf, str.c_str());
+    gzprintf(gzf, "%s", str.c_str());
     return *this;
 }
 

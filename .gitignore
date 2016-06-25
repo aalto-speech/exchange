@@ -3,5 +3,7 @@
 *.o
 *.exe
 runtests
-train
-
+exchange
+ngramppl
+classppl
+classintppl

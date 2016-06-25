@@ -1,12 +1,12 @@
-cxxflags = -O3 -DNDEBUG -std=gnu++0x -Wall -Wno-write-strings -Wno-unused-function
-#cxxflags = -O0 -g -std=gnu++0x -Wall -Wno-write-strings -Wno-unused-function
+cxxflags = -O3 -DNDEBUG -std=gnu++0x -Wall -Wno-unused-function
+#cxxflags = -O0 -g -std=gnu++0x -Wall -Wno-unused-function
 
 ##################################################
 
-progs = exchange
+progs = exchange ngramppl classppl classintppl
 progs_srcs = $(progs:=.cc)
 progs_objs = $(progs:=.o)
-srcs = conf.cc io.cc ExchangeAlgorithm.cc
+srcs = conf.cc io.cc Ngram.cc ExchangeAlgorithm.cc
 objs = $(srcs:.cc=.o)
 
 test_progs = runtests
@@ -31,7 +31,7 @@ $(progs): %: %.o $(objs)
 	$(CXX) $(cxxflags) $< -o $@ $(objs) -lz
 
 $(test_progs): %: %.o $(objs) $(test_objs)
-	$(CXX) $(cxxflags) $< -o $@ $(objs) $(test_objs) -lcppunit -lz
+	$(CXX) $(cxxflags) $< -o $@ $(objs) $(test_objs) -lboost_unit_test_framework -lz
 
 test_objs: $(test_srcs)
 

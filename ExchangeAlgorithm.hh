@@ -27,7 +27,7 @@ public:
     void write_word_classes(std::string fname) const;
     void write_class_mem_probs(std::string fname) const;
     void write_classes(std::string fname) const;
-    void initialize_classes_by_random(unsigned int top_word_classes=0);
+    void initialize_classes_by_freq(unsigned int top_word_classes=0);
     void read_class_initialization(std::string class_fname);
     void set_class_counts();
     double log_likelihood() const;
@@ -78,8 +78,8 @@ private:
     std::vector<int> m_class_counts;
     std::vector<std::vector<int> > m_class_bigram_counts;
 
-    std::vector<std::map<int, int> > m_class_word_counts;
-    std::vector<std::map<int, int> > m_word_class_counts;
+    std::vector<std::map<int, int> > m_class_word_counts; // First index word, second source class
+    std::vector<std::map<int, int> > m_word_class_counts; // First index word, second target class
 };
 
 

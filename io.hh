@@ -21,10 +21,9 @@ public:
 class IFStreamInput : public FileInputType
 {
 public:
-    IFStreamInput(std::string filename) { ifstr.open(filename, std::ios_base::in); };
+    IFStreamInput(std::string filename) { ifstr.open(filename.c_str(), std::ios_base::in); };
     ~IFStreamInput() { ifstr.close(); }
-    bool getline(std::string &line) { return (bool)std::getline(ifstr, 
-line); }
+    bool getline(std::string &line) { return (bool)std::getline(ifstr, line); }
 private:
     std::ifstream ifstr;
 };
@@ -45,7 +44,7 @@ class SimpleFileInput
 {
 public:
     SimpleFileInput(std::string filename);
-    ~SimpleFileInput() { };
+    ~SimpleFileInput();
     bool getline(std::string &line) { return infs->getline(line); }
 private:
     bool ends_with(std::string const &filename,
@@ -54,7 +53,7 @@ private:
         if (filename.length() < suffix.length()) return false;
         return (0 == filename.compare(filename.length()-suffix.length(), suffix.length(), suffix));
     }
-    std::unique_ptr<FileInputType> infs;
+    FileInputType *infs;
 };
 
 
@@ -107,7 +106,7 @@ public:
     GZipFileOutput& operator<<(double);
 private:
     gzFile gzf;
-    bool open;
+    bool file_open;
 };
 #endif
 
@@ -132,7 +131,7 @@ private:
         if (filename.length() < suffix.length()) return false;
         return (0 == filename.compare(filename.length()-suffix.length(), suffix.length(), suffix));
     }
-    std::unique_ptr<FileOutputType> outfs;
+    FileOutputType *outfs;
 };
 
 

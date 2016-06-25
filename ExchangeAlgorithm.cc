@@ -407,41 +407,6 @@ Exchange::do_exchange(int word,
 }
 
 
-void
-Exchange::do_merge(int class_1,
-                   int class_2)
-{
-    for (unsigned int i=0; i<m_word_classes.size(); i++)
-        if (m_word_classes[i] == class_2) m_word_classes[i] = class_1;
-
-    for (auto wit=m_classes[class_2].begin(); wit != m_classes[class_2].end(); ++wit)
-        m_classes[class_1].insert(*wit);
-    m_classes[class_2].clear();
-
-    m_class_counts[class_1] += m_class_counts[class_2];
-    m_class_counts[class_2] = 0;
-
-    for (unsigned int c=0; c<m_class_bigram_counts[class_2].size(); c++) {
-        m_class_bigram_counts[class_1][c] += m_class_bigram_counts[class_2][c];
-        m_class_bigram_counts[class_2][c] = 0;
-    }
-
-    for (unsigned int c=0; c<m_class_bigram_counts.size(); c++) {
-        m_class_bigram_counts[c][class_1] += m_class_bigram_counts[c][class_2];
-        m_class_bigram_counts[c][class_2] = 0;
-    }
-
-    for (auto wit=m_class_word_counts[class_2].begin(); wit != m_class_word_counts[class_2].end(); ++wit)
-        m_class_word_counts[class_1][wit->first] += wit->second;
-    m_class_word_counts[class_2].clear();
-
-    for (auto wit=m_word_class_counts.begin(); wit != m_word_class_counts.end(); ++wit) {
-        (*wit)[class_1] += (*wit)[class_2];
-        (*wit)[class_2] = 0;
-    }
-}
-
-
 double
 Exchange::iterate(int max_iter,
                   int max_seconds,

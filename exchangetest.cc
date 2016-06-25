@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(EvalMerge)
 
     Exchange e_ref(3);
     e_ref.read_corpus("test/corpus1.txt");
-    e_ref.initialize_classes_by_random();
+    e_ref.initialize_classes_by_freq();
     e_ref.set_class_counts();
 
     for (unsigned int i=0; i<e_ref.m_vocabulary.size(); i++)
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(EvalMerge)
 
     Exchange e_test(3);
     e_test.read_corpus("test/corpus1.txt");
-    e_test.initialize_classes_by_random();
+    e_test.initialize_classes_by_freq();
     e_test.set_class_counts();
     e_test.do_merge(3, 4);
     double test_ll = e_test.log_likelihood();

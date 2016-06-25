@@ -53,7 +53,6 @@ int main(int argc, char* argv[])
         t2=time(0);
         cerr << "Train run time: " << t2-t1 << " seconds" << endl;
 
-        e.write_word_classes(model_fname + ".cgenprobs.gz");
         e.write_class_mem_probs(model_fname + ".cmemprobs.gz");
         e.write_classes(model_fname + ".classes.gz");
 

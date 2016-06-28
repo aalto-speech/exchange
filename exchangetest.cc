@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <ctime>
+#include <random>
 
 #define private public
 #include "ExchangeAlgorithm.hh"
@@ -152,6 +153,37 @@ BOOST_AUTO_TEST_CASE(EvalExchange)
     double ref_ll = e.log_likelihood();
 
     BOOST_CHECK_EQUAL( orig_ll+evaluated_ll_diff, ref_ll );
+}
+
+
+// Test for running random exchange evaluations
+BOOST_AUTO_TEST_CASE(EvalExchange2)
+{
+    cerr << endl;
+    Exchange e(2, "test/corpus1.txt");
+
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> wuni(3, e.m_vocabulary.size()-1);
+    std::uniform_int_distribution<int> cuni(e.m_num_special_classes, e.m_num_classes-1);
+
+    for (int i=0; i<1000; i++) {
+
+        int widx = wuni(rng);
+        int curr_class = e.m_word_classes[widx];
+        if (e.m_classes[curr_class].size() == 1) continue;
+
+        int new_class = cuni(rng);
+        while (new_class == curr_class)
+            new_class = cuni(rng);
+
+        double evaluated_ll_diff = e.evaluate_exchange(widx, curr_class, new_class);
+        double orig_ll = e.log_likelihood();
+        e.do_exchange(widx, curr_class, new_class);
+        double new_ll = e.log_likelihood();
+
+        BOOST_CHECK_CLOSE( orig_ll+evaluated_ll_diff, new_ll, 0.0001 );
+    }
 }
 
 

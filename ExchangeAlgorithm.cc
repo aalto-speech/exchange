@@ -195,8 +195,10 @@ Exchange::initialize_classes_by_freq(unsigned int top_word_classes)
     m_classes[START_CLASS].insert(m_vocabulary_lookup["</s>"]);
     m_classes[UNK_CLASS].insert(m_vocabulary_lookup["<unk>"]);
     if (m_word_boundary) {
-        m_word_classes[m_vocabulary_lookup["<w>"]] = WB_CLASS;
-        m_classes[WB_CLASS].insert(m_vocabulary_lookup["<w>"]);
+        int wb_idx = m_vocabulary_lookup["<w>"];
+        m_classes[m_word_classes[wb_idx]].erase(wb_idx);
+        m_classes[WB_CLASS].insert(wb_idx);
+        m_word_classes[wb_idx] = WB_CLASS;
     }
 }
 

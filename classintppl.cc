@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 
     conf::Config config;
     config("usage: classintppl [OPTION...] ARPAFILE CLASS_ARPA CLASS_MEMBERSHIPS INPUT\n")
-    ('w', "weight=FLOAT", "arg", "0.5", "Interpolation weight [0.0,1,0] for the word ARPA model")
+    ('i', "weight=FLOAT", "arg", "0.5", "Interpolation weight [0.0,1,0] for the word ARPA model")
     ('r', "use-root-node", "", "", "Pass through root node in contexts with unks, DEFAULT: advance with unk symbol")
     ('w', "num-words=INT", "arg", "", "Number of words for computing word-normalized perplexity")
     ('h', "help", "", "", "display help");

@@ -6,7 +6,8 @@ Martin, Liermann, Ney: Algorithms for bigram and trigram word clustering, Speech
 Botros, Irie, Sundermeyer, Ney: On efficient training of word classes and their application to recurrent neural network language models, Interspeech 2015  
 
 One sentence per line is assumed.  
-Sentence begin and end markers (<s>, </s>) are added to each line if not present in the corpus.  
+Sentence begin and end markers are added to each line if not present in the corpus.
+Perplexity values include the sentence end symbol.
 
 Usage example:  
 exchange -c 1000 -a 1000 -m 10000 -t 2 corpus.txt exchange.c1000  

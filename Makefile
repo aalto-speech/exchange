@@ -31,7 +31,7 @@ $(progs): %: %.o $(objs)
 	$(CXX) $(cxxflags) $< -o $@ $(objs) -lz
 
 $(test_progs): %: %.o $(objs) $(test_objs)
-	$(CXX) $(cxxflags) $< -o $@ $(objs) $(test_objs) -lboost_unit_test_framework -lz
+	$(CXX) $(cxxflags) $< -o $@ $(objs) $(test_objs) -lboost_unit_test_framework -lz -pthread
 
 test_objs: $(test_srcs)
 

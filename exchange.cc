@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <iomanip>
 #include <ctime>
 
 #include "conf.hh"
@@ -27,6 +28,8 @@ int main(int argc, char* argv[])
         ('h', "help", "", "", "display help");
         config.default_parse(argc, argv);
         if (config.arguments.size() != 2) config.print_help(stderr, 1);
+
+        std::cerr << std::setprecision(10);
 
         string corpus_fname = config.arguments[0];
         string model_fname = config.arguments[1];

@@ -13,6 +13,7 @@ using namespace std;
 
 
 void preprocess_sent(string line,
+                     const Ngram &lm,
                      const map<string, pair<int, flt_type> > &class_memberships,
                      string unk_symbol,
                      vector<string> &words,
@@ -25,7 +26,8 @@ void preprocess_sent(string line,
     while (ss >> word) {
         if (word == "<s>") continue;
         if (word == "</s>") continue;
-        if (class_memberships.find(word) == class_memberships.end()
+        if (lm.vocabulary_lookup.find(word) == lm.vocabulary_lookup.end()
+            || class_memberships.find(word) == class_memberships.end()
             || word == "<unk>"  || word == "<UNK>")
         {
             words.push_back(unk_symbol);
@@ -101,6 +103,10 @@ int main(int argc, char* argv[]) {
         if (class_ng.vocabulary_lookup.find(int2str(i)) != class_ng.vocabulary_lookup.end())
             indexmap[i] = class_ng.vocabulary_lookup[int2str(i)];
         else indexmap[i] = -1;
+    if (indexmap[UNK_CLASS] == -1) {
+        cerr << "Unk class not found in the class n-gram model, forcing use-root-node" << endl;
+        root_unk_states = true;
+    }
 
     cerr << "Scoring sentences.." << endl;
     SimpleFileInput infile(infname);
@@ -119,12 +125,13 @@ int main(int argc, char* argv[]) {
         double sent_ll = 0.0;
 
         vector<string> words;
-        preprocess_sent(line, class_memberships, unk, words, num_words, num_oovs);
+        preprocess_sent(line, lm, class_memberships, unk, words, num_words, num_oovs);
 
         int curr_class_lm_node = class_lm_start_node;
         int curr_lm_node = lm_start_node;
 
         for (int i=0; i<(int)words.size(); i++) {
+
             if (words[i] == unk) {
                 if (root_unk_states) {
                     curr_lm_node = lm.root_node;

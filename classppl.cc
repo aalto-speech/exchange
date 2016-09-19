@@ -42,6 +42,10 @@ int main(int argc, char* argv[]) {
     for (int i=0; i<(int)indexmap.size(); i++)
         if (ng.vocabulary_lookup.find(int2str(i)) != ng.vocabulary_lookup.end())
             indexmap[i] = ng.vocabulary_lookup[int2str(i)];
+    if (indexmap[UNK_CLASS] == -1) {
+        cerr << "Unk class not found in the class n-gram model, forcing use-root-node" << endl;
+        root_unk_states = true;
+    }
 
     cerr << "Scoring sentences.." << endl;
     SimpleFileInput infile(infname);

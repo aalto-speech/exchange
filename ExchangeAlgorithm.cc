@@ -250,12 +250,13 @@ Exchange::read_class_initialization(string class_fname)
         int file_idx, class_idx;
         ss >> file_idx;
         auto cit = file_to_class_idx.find(file_idx);
-        if (cit == file_to_class_idx.end()) {
+        if (cit != file_to_class_idx.end()) {
             class_idx = cit->second;
         }
         else {
             class_idx = m_classes.size();
             m_classes.resize(class_idx+1);
+            file_to_class_idx[file_idx] = class_idx;
         }
 
         m_classes[class_idx].insert(widx);

@@ -1,6 +1,7 @@
 #include <sstream>
 #include <cmath>
 #include <ctime>
+#include <cassert>
 #include <thread>
 #include <functional>
 #include <iterator>
@@ -141,6 +142,7 @@ void
 Exchange::write_classes(string fname) const
 {
     SimpleFileOutput mfo(fname);
+    assert(m_classes.size() == static_cast<unsigned int>(m_num_classes));
     for (int cidx = 0; cidx < m_num_classes; cidx++) {
         const set<int> &words = m_classes[cidx];
         for (auto wit=words.begin(); wit != words.end(); ++wit) {
@@ -205,28 +207,66 @@ void
 Exchange::read_class_initialization(string class_fname)
 {
     cerr << "Reading class initialization from " << class_fname << endl;
+
     m_word_classes.resize(m_vocabulary.size());
+    int sos_idx = m_vocabulary_lookup["<s>"];
+    int eos_idx = m_vocabulary_lookup["</s>"];
+    int unk_idx = m_vocabulary_lookup["<unk>"];
+    m_word_classes[sos_idx] = START_CLASS;
+    m_word_classes[eos_idx] = START_CLASS;
+    m_word_classes[unk_idx] = UNK_CLASS;
+    if (m_word_boundary) {
+        m_classes.resize(3);
+        int wb_idx = m_vocabulary_lookup["<w>"];
+        m_word_classes[wb_idx] = WB_CLASS;
+        m_classes[WB_CLASS].insert(wb_idx);
+    }
+    else {
+        m_classes.resize(2);
+    }
+    m_classes[START_CLASS].insert(sos_idx);
+    m_classes[START_CLASS].insert(eos_idx);
+    m_classes[UNK_CLASS].insert(unk_idx);
 
     SimpleFileInput classf(class_fname);
     string line;
+    map<int, int> file_to_class_idx;
     while (classf.getline(line)) {
         if (!line.length()) continue;
         stringstream ss(line);
 
         string word;
-        getline(ss, word, ' ');
+        ss >> word;
+        if (word == "<s>" || word == "</s>" || word == "<unk>" ||
+            (m_word_boundary && word == "<w>")) {
+            cerr << "Warning: You have specified special tokens in the class "
+                 << "initialization file. These will be ignored." << endl;
+            continue;
+        }
         auto vlit = m_vocabulary_lookup.find(word);
         if (vlit == m_vocabulary_lookup.end()) continue;
         int widx = vlit->second;
 
-        string class_str;
-        getline(ss, class_str);
-        unsigned int class_idx = str2int(class_str);
-
-        if (m_classes.size() <= class_idx)
+        int file_idx, class_idx;
+        ss >> file_idx;
+        auto cit = file_to_class_idx.find(file_idx);
+        if (cit == file_to_class_idx.end()) {
+            class_idx = cit->second;
+        }
+        else {
+            class_idx = m_classes.size();
             m_classes.resize(class_idx+1);
+        }
+
         m_classes[class_idx].insert(widx);
         m_word_classes[widx] = class_idx;
+    }
+
+    if (m_classes.size() != static_cast<unsigned int>(m_num_classes)) {
+        cerr << "Warning: You have specified class count " << m_num_classes
+             << ", but provided initialization for " << m_classes.size()
+             << " classes. The class count will be corrected." << endl;
+        m_num_classes = m_classes.size();
     }
 }
 
@@ -234,11 +274,18 @@ Exchange::read_class_initialization(string class_fname)
 void
 Exchange::set_class_counts()
 {
+    cerr << "Allocating " << m_num_classes << " class unigram counts." << endl;
     m_class_counts.resize(m_num_classes, 0);
+    cerr << "Allocating " << m_num_classes << "x" << m_num_classes
+         << " class bigram counts." << endl;
     m_class_bigram_counts.resize(m_num_classes);
     for (unsigned int i=0; i<m_class_bigram_counts.size(); i++)
         m_class_bigram_counts[i].resize(m_num_classes);
+    cerr << "Allocating " << m_vocabulary.size() << " sparse class-word counts."
+         << endl;
     m_class_word_counts.resize(m_vocabulary.size());
+    cerr << "Allocating " << m_vocabulary.size() << " sparse word-class counts."
+         << endl;
     m_word_class_counts.resize(m_vocabulary.size());
 
     for (unsigned int i=0; i<m_word_counts.size(); i++)

@@ -73,7 +73,7 @@ Exchange::read_corpus(string fname,
     m_vocabulary.push_back("<unk>");
     m_vocabulary_lookup["<unk>"] = m_vocabulary.size() - 1;
     for (auto wit=word_types.begin(); wit != word_types.end(); ++wit) {
-        if (wit->find("<") != string::npos && *wit != "<w>") continue;
+        if (*wit == "<s>" || *wit == "</s>" || *wit == "<unk>") continue;
         m_vocabulary.push_back(*wit);
         m_vocabulary_lookup[*wit] = m_vocabulary.size() - 1;
     }
@@ -126,8 +126,8 @@ Exchange::write_class_mem_probs(string fname) const
     if (m_word_boundary) mfo << "<w>\t" << WB_CLASS << " " << "0.000000" << "\n";
 
     for (unsigned int widx = 0; widx < m_vocabulary.size(); widx++) {
-        string word = m_vocabulary[widx];
-        if (word.find("<") != string::npos && word != "<w>") continue;
+        const string &word = m_vocabulary[widx];
+        if (word == "<s>" || word == "</s>" || word == "<unk>") continue;
         if (m_word_boundary && word == "<w>") continue;
         double lp = log(m_word_counts[widx]);
         lp -= log(m_class_counts[m_word_classes[widx]]);
@@ -142,13 +142,10 @@ Exchange::write_classes(string fname) const
 {
     SimpleFileOutput mfo(fname);
     for (int cidx = 0; cidx < m_num_classes; cidx++) {
-        mfo << cidx << ": ";
         const set<int> &words = m_classes[cidx];
         for (auto wit=words.begin(); wit != words.end(); ++wit) {
-            if (wit != words.begin()) mfo << ",";
-            mfo << m_vocabulary[*wit];
+            mfo << m_vocabulary[*wit] << " " << cidx << "\n";
         }
-        mfo << "\n";
     }
     mfo.close();
 }
@@ -159,7 +156,8 @@ Exchange::initialize_classes_by_freq(unsigned int top_word_classes)
 {
     multimap<int, int> sorted_words;
     for (unsigned int i=0; i<m_word_counts.size(); ++i) {
-        if (m_vocabulary[i].find("<") != string::npos && m_vocabulary[i] != "<w>") continue;
+        const string& word = m_vocabulary[i];
+        if (word == "<s>" || word == "</s>" || word == "<unk>") continue;
         sorted_words.insert(make_pair(m_word_counts[i], i));
     }
 
@@ -213,20 +211,22 @@ Exchange::read_class_initialization(string class_fname)
     string line;
     while (classf.getline(line)) {
         if (!line.length()) continue;
-        size_t pos = line.find_first_of(":");
-        int class_idx = str2int(line.substr(0, pos));
-        string words = line.substr(pos+2);
-        stringstream wordss(words);
-        string token;
+        stringstream ss(line);
 
-        m_classes.resize(m_classes.size()+1);
-        while(std::getline(wordss, token, ',')) {
-            auto vlit = m_vocabulary_lookup.find(token);
-            if (vlit == m_vocabulary_lookup.end()) continue;
-            int widx = vlit->second;
-            m_word_classes[widx] = class_idx;
-            m_classes.back().insert(widx);
-        }
+        string word;
+        getline(ss, word, ' ');
+        auto vlit = m_vocabulary_lookup.find(word);
+        if (vlit == m_vocabulary_lookup.end()) continue;
+        int widx = vlit->second;
+
+        string class_str;
+        getline(ss, class_str);
+        unsigned int class_idx = str2int(class_str);
+
+        if (m_classes.size() <= class_idx)
+            m_classes.resize(class_idx+1);
+        m_classes[class_idx].insert(widx);
+        m_word_classes[widx] = class_idx;
     }
 }
 

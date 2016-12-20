@@ -4,7 +4,6 @@
 
 #include "Ngram.hh"
 #include "str.hh"
-#include "defs.hh"
 
 using namespace std;
 
@@ -160,7 +159,9 @@ Ngram::read_arpa(string arpafname) {
         stringstream vals(line);
         getline(vals, line, '=');
         getline(vals, line, '=');
-        int count = str2int(line);
+        int count;
+        std::istringstream numstr(line);
+        numstr >> count;
         ngram_counts_per_order[curr_ngram_order] = count;
         total_ngram_count += count;
         curr_ngram_order++;
@@ -202,9 +203,30 @@ Ngram::read_arpa(string arpafname) {
         total_ngrams_read += ngrams_read;
     }
 
+    if (vocabulary_lookup.find(sentence_start_symbol) == vocabulary_lookup.end())
+        throw string("Sentence start symbol not found.");
     sentence_start_symbol_idx = vocabulary_lookup[sentence_start_symbol];
     sentence_start_node = find_node(root_node, sentence_start_symbol_idx);
-    if (sentence_start_node == -1) throw string("Sentence start symbol not found.");
+    if (sentence_start_node == -1)
+        throw string("Sentence start node not set.");
+
+    if (vocabulary_lookup.find(sentence_end_symbol) == vocabulary_lookup.end())
+        throw string("Sentence end symbol not found.");
+    sentence_end_symbol_idx = vocabulary_lookup[sentence_end_symbol];
+
+    if (vocabulary_lookup.find("<unk>") != vocabulary_lookup.end()
+        && vocabulary_lookup.find("<UNK>") != vocabulary_lookup.end())
+            throw string("Error, both <unk> and <UNK> symbols in the language model");
+    else if (vocabulary_lookup.find("<unk>") != vocabulary_lookup.end()) {
+        cerr << "Detected unk symbol: <unk>" << endl;
+        unk_symbol_idx = vocabulary_lookup["<unk>"];
+    }
+    else if (vocabulary_lookup.find("<UNK>") != vocabulary_lookup.end()) {
+        cerr << "Detected unk symbol: <UNK>" << endl;
+        unk_symbol.assign("<UNK>");
+        unk_symbol_idx = vocabulary_lookup["<UNK>"];
+    }
+    else throw string("Error, no unk symbol in the language model");
 }
 
 

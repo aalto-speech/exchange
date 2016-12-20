@@ -24,10 +24,12 @@ public:
     Ngram() : root_node(0),
         sentence_start_node(-1),
         sentence_start_symbol_idx(-1),
-        max_order(-1)
-    {
-        sentence_start_symbol.assign("<s>");
-    };
+        sentence_start_symbol("<s>"),
+        sentence_end_symbol_idx(-1),
+        sentence_end_symbol("</s>"),
+        unk_symbol_idx(-1),
+        unk_symbol("<unk>"),
+        max_order(-1) { };
     ~Ngram() {};
     void read_arpa(std::string arpafname);
     void write_arpa(std::string arpafname);
@@ -41,8 +43,16 @@ public:
     int sentence_start_node;
     int sentence_start_symbol_idx;
     std::string sentence_start_symbol;
+
+    int sentence_end_symbol_idx;
+    std::string sentence_end_symbol;
+
+    int unk_symbol_idx;
+    std::string unk_symbol;
+
     std::vector<std::string> vocabulary;
     std::map<std::string, int> vocabulary_lookup;
+
 
 //private:
 

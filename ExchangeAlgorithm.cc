@@ -18,12 +18,10 @@ Exchange::Exchange(int num_classes,
                    string fname,
                    string vocab_fname,
                    string class_fname,
-                   unsigned int top_word_classes,
-                   bool word_boundary)
-    : m_num_classes(num_classes+2),
-      m_word_boundary(word_boundary)
+                   unsigned int top_word_classes)
+    : m_num_classes(num_classes+2)
 {
-    m_num_special_classes = word_boundary ? 3 : 2;
+    m_num_special_classes = 2;
     if (fname.length()) {
         read_corpus(fname, vocab_fname);
         if (class_fname.length())
@@ -84,13 +82,13 @@ Exchange::read_corpus(string fname,
     m_word_counts.resize(m_vocabulary.size());
     m_word_bigram_counts.resize(m_vocabulary.size());
     m_word_rev_bigram_counts.resize(m_vocabulary.size());
-    SimpleFileInput corpusf2(fname);
-    int num_tokens = 0;
 
     int ss_idx = m_vocabulary_lookup["<s>"];
     int se_idx = m_vocabulary_lookup["</s>"];
     int unk_idx = m_vocabulary_lookup["<unk>"];
 
+    int num_tokens = 0;
+    SimpleFileInput corpusf2(fname);
     while (corpusf2.getline(line)) {
         vector<int> sent;
         stringstream ss(line);
@@ -98,7 +96,6 @@ Exchange::read_corpus(string fname,
 
         sent.push_back(ss_idx);
         while (ss >> token) {
-            if (m_word_boundary && token == "<w>") continue;
             auto vlit = m_vocabulary_lookup.find(token);
             if (vlit != m_vocabulary_lookup.end())
                 sent.push_back(vlit->second);
@@ -124,12 +121,10 @@ Exchange::write_class_mem_probs(string fname) const
     SimpleFileOutput mfo(fname);
     mfo << "<s>\t" << START_CLASS << " " << "0.000000" << "\n";
     mfo << "<unk>\t" << UNK_CLASS << " " << "0.000000" << "\n";
-    if (m_word_boundary) mfo << "<w>\t" << WB_CLASS << " " << "0.000000" << "\n";
 
     for (unsigned int widx = 0; widx < m_vocabulary.size(); widx++) {
         const string &word = m_vocabulary[widx];
         if (word == "<s>" || word == "</s>" || word == "<unk>") continue;
-        if (m_word_boundary && word == "<w>") continue;
         double lp = log(m_word_counts[widx]);
         lp -= log(m_class_counts[m_word_classes[widx]]);
         mfo << word << "\t" << m_word_classes[widx] << " " << lp << "\n";
@@ -194,12 +189,6 @@ Exchange::initialize_classes_by_freq(unsigned int top_word_classes)
     m_classes[START_CLASS].insert(m_vocabulary_lookup["<s>"]);
     m_classes[START_CLASS].insert(m_vocabulary_lookup["</s>"]);
     m_classes[UNK_CLASS].insert(m_vocabulary_lookup["<unk>"]);
-    if (m_word_boundary) {
-        int wb_idx = m_vocabulary_lookup["<w>"];
-        m_classes[m_word_classes[wb_idx]].erase(wb_idx);
-        m_classes[WB_CLASS].insert(wb_idx);
-        m_word_classes[wb_idx] = WB_CLASS;
-    }
 }
 
 
@@ -215,15 +204,7 @@ Exchange::read_class_initialization(string class_fname)
     m_word_classes[sos_idx] = START_CLASS;
     m_word_classes[eos_idx] = START_CLASS;
     m_word_classes[unk_idx] = UNK_CLASS;
-    if (m_word_boundary) {
-        m_classes.resize(3);
-        int wb_idx = m_vocabulary_lookup["<w>"];
-        m_word_classes[wb_idx] = WB_CLASS;
-        m_classes[WB_CLASS].insert(wb_idx);
-    }
-    else {
-        m_classes.resize(2);
-    }
+    m_classes.resize(2);
     m_classes[START_CLASS].insert(sos_idx);
     m_classes[START_CLASS].insert(eos_idx);
     m_classes[UNK_CLASS].insert(unk_idx);
@@ -237,8 +218,7 @@ Exchange::read_class_initialization(string class_fname)
 
         string word;
         ss >> word;
-        if (word == "<s>" || word == "</s>" || word == "<unk>" ||
-            (m_word_boundary && word == "<w>")) {
+        if (word == "<s>" || word == "</s>" || word == "<unk>") {
             cerr << "Warning: You have specified special tokens in the class "
                  << "initialization file. These will be ignored." << endl;
             continue;
@@ -477,8 +457,6 @@ Exchange::iterate(int max_iter,
 
             if (m_word_classes[widx] == START_CLASS ||
                 m_word_classes[widx] == UNK_CLASS) continue;
-
-            if (m_word_boundary && m_word_classes[widx] == WB_CLASS) continue;
 
             int curr_class = m_word_classes[widx];
             if (m_classes[curr_class].size() == 1) continue;

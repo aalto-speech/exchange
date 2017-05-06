@@ -24,7 +24,6 @@ int main(int argc, char* argv[])
         ('w', "model-write-interval=INT", "arg", "3600", "Model write interval, default: 3600 (seconds)")
         ('v', "vocabulary=FILE", "arg", "", "Vocabulary, one word per line")
         ('i', "class-init=FILE", "arg", "", "Class initialization, same format as in model classes file")
-        ('b', "word-boundary", "", "", "Keep word boundary symbol in the vocabulary, ignore in training")
         ('h', "help", "", "", "display help");
         config.default_parse(argc, argv);
         if (config.arguments.size() != 2) config.print_help(stderr, 1);
@@ -43,10 +42,9 @@ int main(int argc, char* argv[])
         int model_write_interval = config["model-write-interval"].get_int();
         string vocab_fname = config["vocabulary"].get_str();
         string class_fname = config["class-init"].get_str();
-        bool word_boundary = config["word-boundary"].specified;
 
         Exchange e(num_classes, corpus_fname, vocab_fname,
-                   class_fname, top_words, word_boundary);
+                   class_fname, top_words);
 
         time_t t1,t2;
         t1=time(0);

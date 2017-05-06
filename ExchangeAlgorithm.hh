@@ -6,10 +6,8 @@
 #include <string>
 #include <vector>
 
-
 #define START_CLASS 0
 #define UNK_CLASS 1
-#define WB_CLASS 2 // Optional
 
 
 class Exchange {
@@ -18,8 +16,7 @@ public:
              std::string fname="",
              std::string vocab_fname="",
              std::string class_fname="",
-             unsigned int top_word_classes=0,
-             bool word_boundary=false);
+             unsigned int top_word_classes=0);
     ~Exchange() { };
 
     void read_corpus(std::string fname,
@@ -55,11 +52,9 @@ public:
                              int &best_class,
                              double &best_ll_diff);
 
-
 private:
 
     int m_num_classes;
-    bool m_word_boundary;
     int m_num_special_classes;
 
     std::vector<std::string> m_vocabulary;

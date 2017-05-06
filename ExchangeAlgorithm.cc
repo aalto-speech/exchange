@@ -96,6 +96,7 @@ Exchange::read_corpus(string fname,
 
         sent.push_back(ss_idx);
         while (ss >> token) {
+            if (token == "<s>" || token == "</s>") continue;
             auto vlit = m_vocabulary_lookup.find(token);
             if (vlit != m_vocabulary_lookup.end())
                 sent.push_back(vlit->second);

@@ -134,21 +134,6 @@ Exchange::write_class_mem_probs(string fname) const
 
 
 void
-Exchange::write_classes(string fname) const
-{
-    SimpleFileOutput mfo(fname);
-    assert(m_classes.size() == static_cast<unsigned int>(m_num_classes));
-    for (int cidx = 0; cidx < m_num_classes; cidx++) {
-        const set<int> &words = m_classes[cidx];
-        for (auto wit=words.begin(); wit != words.end(); ++wit) {
-            mfo << m_vocabulary[*wit] << " " << cidx << "\n";
-        }
-    }
-    mfo.close();
-}
-
-
-void
 Exchange::initialize_classes_by_freq(unsigned int top_word_classes)
 {
     multimap<int, int> sorted_words;
@@ -504,7 +489,6 @@ Exchange::iterate(int max_iter,
                 if (model_write_interval > 0 && curr_time-last_model_write_time > model_write_interval) {
                     string temp_base = model_base + ".temp" + int2str(tmp_model_idx);
                     write_class_mem_probs(temp_base + ".cmemprobs.gz");
-                    write_classes(temp_base + ".classes.gz");
                     last_model_write_time = curr_time;
                     tmp_model_idx++;
                 }

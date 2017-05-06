@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#define GZIP_BUFFER_SIZE 1048576
+#define GZIP_BUFFER_SIZE 102400
 
 using namespace std;
 

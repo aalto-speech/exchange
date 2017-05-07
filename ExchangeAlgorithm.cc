@@ -72,7 +72,8 @@ Exchange::read_corpus(string fname,
     m_vocabulary.push_back("<unk>");
     m_vocabulary_lookup["<unk>"] = m_vocabulary.size() - 1;
     for (auto wit=word_types.begin(); wit != word_types.end(); ++wit) {
-        if (*wit == "<s>" || *wit == "</s>" || *wit == "<unk>") continue;
+        if (*wit == "<s>" || *wit == "</s>"
+            || *wit == "<unk>" || *wit == "<UNK>") continue;
         m_vocabulary.push_back(*wit);
         m_vocabulary_lookup[*wit] = m_vocabulary.size() - 1;
     }
@@ -97,10 +98,14 @@ Exchange::read_corpus(string fname,
         sent.push_back(ss_idx);
         while (ss >> token) {
             if (token == "<s>" || token == "</s>") continue;
-            auto vlit = m_vocabulary_lookup.find(token);
-            if (vlit != m_vocabulary_lookup.end())
-                sent.push_back(vlit->second);
-            else sent.push_back(unk_idx);
+            if (token == "<unk>" || token == "<UNK>") {
+                sent.push_back(unk_idx);
+            } else {
+                auto vlit = m_vocabulary_lookup.find(token);
+                if (vlit != m_vocabulary_lookup.end())
+                    sent.push_back(vlit->second);
+                else sent.push_back(unk_idx);
+            }
         }
         sent.push_back(se_idx);
 

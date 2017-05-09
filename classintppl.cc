@@ -11,7 +11,6 @@
 using namespace std;
 
 
-
 void preprocess_sent(string line,
                      const Ngram &lm,
                      const map<string, pair<int, flt_type> > &class_memberships,
@@ -58,6 +57,7 @@ int main(int argc, char* argv[]) {
     string classmfname = config.arguments[2];
     string infname = config.arguments[3];
 
+    string unk = "<unk>";
     bool root_unk_states = config["use-root-node"].specified;
 
     double iw = config["weight"].get_float();
@@ -72,21 +72,6 @@ int main(int argc, char* argv[]) {
     Ngram lm;
     lm.read_arpa(arpafname);
     int lm_start_node = lm.advance(lm.root_node, lm.vocabulary_lookup.at("<s>"));
-
-    string unk;
-    int unk_id;
-    if (lm.vocabulary_lookup.find("<unk>") != lm.vocabulary_lookup.end()) {
-        unk.assign("<unk>");
-        unk_id = lm.vocabulary_lookup["<unk>"];
-    }
-    else if (lm.vocabulary_lookup.find("<UNK>") != lm.vocabulary_lookup.end()) {
-        unk.assign("<UNK>");
-        unk_id = lm.vocabulary_lookup["<UNK>"];
-    }
-    else {
-        cerr << "Unk symbol not found in language model." << endl;
-        exit(1);
-    }
 
     map<string, pair<int, flt_type> > class_memberships;
     cerr << "Reading class memberships.." << endl;
@@ -103,10 +88,6 @@ int main(int argc, char* argv[]) {
         if (class_ng.vocabulary_lookup.find(int2str(i)) != class_ng.vocabulary_lookup.end())
             indexmap[i] = class_ng.vocabulary_lookup[int2str(i)];
         else indexmap[i] = -1;
-    if (indexmap[UNK_CLASS] == -1) {
-        cerr << "Unk class not found in the class n-gram model, forcing use-root-node" << endl;
-        root_unk_states = true;
-    }
 
     cerr << "Scoring sentences.." << endl;
     SimpleFileInput infile(infname);
@@ -138,8 +119,8 @@ int main(int argc, char* argv[]) {
                     curr_class_lm_node = class_ng.root_node;
                 }
                 else {
-                    curr_lm_node = lm.advance(curr_lm_node, unk_id);
-                    curr_class_lm_node = class_ng.advance(curr_class_lm_node, indexmap[UNK_CLASS]);
+                    curr_lm_node = lm.advance(curr_lm_node, lm.unk_symbol_idx);
+                    curr_class_lm_node = class_ng.advance(curr_class_lm_node, class_ng.unk_symbol_idx);
                 }
                 continue;
             }
@@ -160,12 +141,12 @@ int main(int argc, char* argv[]) {
         }
 
         double ngram_score = 0.0;
-        curr_lm_node = lm.score(curr_lm_node, lm.vocabulary_lookup.at("</s>"), ngram_score);
+        curr_lm_node = lm.score(curr_lm_node, lm.sentence_end_symbol_idx, ngram_score);
         ngram_score *= log(10.0);
         ngram_score += word_iw;
 
         double class_score = 0.0;
-        curr_class_lm_node = class_ng.score(curr_class_lm_node, class_ng.vocabulary_lookup.at("</s>"), class_score);
+        curr_class_lm_node = class_ng.score(curr_class_lm_node, class_ng.sentence_end_symbol_idx, class_score);
         class_score *= log(10.0);
         class_score += class_iw;
 

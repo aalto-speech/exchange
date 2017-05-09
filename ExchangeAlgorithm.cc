@@ -125,15 +125,13 @@ void
 Exchange::write_class_mem_probs(string fname) const
 {
     SimpleFileOutput mfo(fname);
-    mfo << "<s>\t" << START_CLASS << " " << "0.000000" << "\n";
-    mfo << "<unk>\t" << UNK_CLASS << " " << "0.000000" << "\n";
-
     for (unsigned int widx = 0; widx < m_vocabulary.size(); widx++) {
         const string &word = m_vocabulary[widx];
         if (word == "<s>" || word == "</s>" || word == "<unk>") continue;
         double lp = log(m_word_counts[widx]);
         lp -= log(m_class_counts[m_word_classes[widx]]);
-        mfo << word << "\t" << m_word_classes[widx] << " " << lp << "\n";
+        mfo << word << "\t" << m_word_classes[widx]-m_num_special_classes
+            << " " << lp << "\n";
     }
     mfo.close();
 }

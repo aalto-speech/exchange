@@ -27,8 +27,6 @@ if __name__ == '__main__':
             print >>sys.stderr, "Problem in line: %s" % line
             continue
         vocab[tokens[0]] = int(tokens[1])
-    vocab["<unk>"] = UNK_CLASS
-    vocab["<UNK>"] = UNK_CLASS
 
     for line in sys.stdin:
         line = line.strip()
@@ -40,6 +38,6 @@ if __name__ == '__main__':
             if word in vocab:
                 sent.append(str(vocab[word]))
             else:
-                sent.append(str(UNK_CLASS))
+                sent.append("<UNK>")
 
         print "<s> %s </s>" % (" ".join(sent))

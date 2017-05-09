@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <string>
 
 #include "Ngram.hh"
 #include "str.hh"
@@ -63,6 +64,7 @@ Ngram::get_reverse_bigrams(map<int, vector<int> > &reverse_bigrams)
     for (int i=root_nd.first_arc; i<=root_nd.last_arc; i++) {
         int first_word = arc_words[i];
         Node &arc_target_node = nodes[arc_target_nodes[i]];
+        if (arc_target_node.first_arc == -1) continue;
         for (int j=arc_target_node.first_arc; j<=arc_target_node.last_arc; j++) {
             int second_word = arc_words[j];
             reverse_bigrams[second_word].push_back(first_word);
@@ -159,9 +161,11 @@ Ngram::read_arpa(string arpafname) {
         stringstream vals(line);
         getline(vals, line, '=');
         getline(vals, line, '=');
+        if (vals.fail()) throw header_error;
         int count;
         std::istringstream numstr(line);
         numstr >> count;
+        if (numstr.fail()) throw header_error;
         ngram_counts_per_order[curr_ngram_order] = count;
         total_ngram_count += count;
         curr_ngram_order++;
@@ -251,7 +255,7 @@ Ngram::read_arpa_read_order(SimpleFileInput &arpafile,
         vector<string> curr_ngram_str;
         string tmp;
         for (int i=0; i<curr_ngram_order; i++) {
-            if (vals.eof()) throw string("Invalid ARPA line");
+            if (vals.eof()) throw string("Problem reading line: " + line);
             vals >> tmp;
             curr_ngram_str.push_back(tmp);
         }
@@ -267,6 +271,7 @@ Ngram::read_arpa_read_order(SimpleFileInput &arpafile,
 
         if (!vals.eof())
             vals >> ngram.backoff_prob;
+        if (vals.fail()) throw string("Problem reading line: " + line);
 
         order_ngrams.push_back(ngram);
         _getline(arpafile, line, linei);
@@ -322,4 +327,28 @@ Ngram::read_arpa_insert_order_to_tree(std::vector<NgramInfo> &order_ngrams,
         curr_arc_idx++;
         curr_node_idx++;
     }
+}
+
+
+void
+LNNgram::multiply_probs(double multiplier) {
+    for (unsigned int i=0; i<nodes.size(); i++) {
+        nodes[i].prob *= multiplier;
+        nodes[i].backoff_prob *= multiplier;
+    }
+}
+
+
+void
+LNNgram::read_arpa(string arpafname) {
+    Ngram::read_arpa(arpafname);
+    multiply_probs(log(10.0));
+}
+
+
+void
+LNNgram::write_arpa(string arpafname) {
+    multiply_probs(1.0/log(10.0));
+    Ngram::write_arpa(arpafname);
+    multiply_probs(log(10.0));
 }

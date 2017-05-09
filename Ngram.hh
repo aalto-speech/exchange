@@ -31,8 +31,8 @@ public:
         unk_symbol("<unk>"),
         max_order(-1) { };
     ~Ngram() {};
-    void read_arpa(std::string arpafname);
-    void write_arpa(std::string arpafname);
+    virtual void read_arpa(std::string arpafname);
+    virtual void write_arpa(std::string arpafname);
     int score(int node_idx, int word, double &score) const;
     int score(int node_idx, int word, float &score) const;
     int advance(int node_idx, int word) const { float tmp; return score(node_idx, word, tmp); }
@@ -90,6 +90,14 @@ public:
     std::map<int, int> ngram_counts_per_order;
     int max_order;
 };
+
+class LNNgram : public Ngram {
+public:
+    void read_arpa(std::string arpafname);
+    void write_arpa(std::string arpafname);
+    void multiply_probs(double multiplier);
+};
+
 
 #endif
 

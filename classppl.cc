@@ -35,17 +35,12 @@ int main(int argc, char* argv[]) {
     cerr << "Reading class n-gram model.." << endl;
     Ngram ng;
     ng.read_arpa(ngramfname);
-    int class_lm_start_node = ng.advance(ng.root_node, ng.vocabulary_lookup.at("<s>"));
 
     // The class indexes are stored as strings in the n-gram class
     vector<int> indexmap(num_classes);
     for (int i=0; i<(int)indexmap.size(); i++)
         if (ng.vocabulary_lookup.find(int2str(i)) != ng.vocabulary_lookup.end())
             indexmap[i] = ng.vocabulary_lookup[int2str(i)];
-    if (indexmap[UNK_CLASS] == -1) {
-        cerr << "Unk class not found in the class n-gram model, forcing use-root-node" << endl;
-        root_unk_states = true;
-    }
 
     cerr << "Scoring sentences.." << endl;
     SimpleFileInput infile(infname);
@@ -82,11 +77,11 @@ int main(int argc, char* argv[]) {
 
         double sent_ll = 0.0;
 
-        int curr_node = class_lm_start_node;
+        int curr_node = ng.sentence_start_node;
         for (int i=0; i<(int)words.size(); i++) {
             if (words[i] == unk) {
                 if (root_unk_states) curr_node = ng.root_node;
-                else curr_node = ng.advance(curr_node, indexmap[UNK_CLASS]);
+                else curr_node = ng.advance(curr_node, ng.unk_symbol_idx);
                 continue;
             }
 
@@ -98,7 +93,7 @@ int main(int argc, char* argv[]) {
         }
 
         double ngram_score = 0.0;
-        curr_node = ng.score(curr_node, ng.vocabulary_lookup.at("</s>"), ngram_score);
+        curr_node = ng.score(curr_node, ng.sentence_end_symbol_idx, ngram_score);
         sent_ll += log(10.0) * ngram_score;
 
         total_ll += sent_ll;

@@ -12,8 +12,8 @@ For more details:
 Martin, Liermann, Ney: Algorithms for bigram and trigram word clustering, Speech Communication 1998  
 Botros, Irie, Sundermeyer, Ney: On efficient training of word classes and their application to recurrent neural network language models, Interspeech 2015  
 
-UPDATE 10.5.2017: Improved handling of unk symbols.  
-Select either --cap_unk (for VariKN) or --lc_unk (for instance SRILM) with class_corpus.py
+**UPDATE 10.5.2017**: Improved handling of unk symbols.  
+Select either --cap_unk (for VariKN) or --lc_unk (for instance SRILM) with class_corpus.py  
 Old models are not compatible with the new version.  
 ngramppl/classppl/classintppl checks for the correct unk symbol.
 

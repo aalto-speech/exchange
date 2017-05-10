@@ -5,14 +5,24 @@ import gzip
 import argparse
 
 
-UNK_CLASS = 1
-
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(description='Converts a text corpus to corresponding class sequences.')
-    parser.add_argument('class_memberships', action="store", default=False,
+    parser.add_argument('class_memberships', action="store",
                         help='Class membership file written by exchange (.gz supported)')
+    parser.add_argument('--cap_unk', action="store_true", default=False,
+                        help='Unk symbol should be written in capitals i.e. <UNK>')
+    parser.add_argument('--lc_unk', action="store_true", default=False,
+                        help='Unk symbol should be written in lowercase i.e. <unk>')
     args = parser.parse_args()
+
+    unk = None
+    if args.cap_unk:
+        unk = "<UNK>"
+    elif args.lc_unk:
+        unk = "<unk>"
+    else:
+        print >>sys.stderr, "Define either cap_unk or lc_unk option"
+        sys.exit(0)
 
     if args.class_memberships.endswith(".gz"):
         vocabf = gzip.open(args.class_memberships, "r")
@@ -38,6 +48,6 @@ if __name__ == '__main__':
             if word in vocab:
                 sent.append(str(vocab[word]))
             else:
-                sent.append("<UNK>")
+                sent.append(unk)
 
         print "<s> %s </s>" % (" ".join(sent))

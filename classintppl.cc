@@ -69,18 +69,16 @@ int main(int argc, char* argv[]) {
     double word_iw = log(iw);
     double class_iw = log(1.0-iw);
 
-    Ngram lm;
+    LNNgram lm;
     lm.read_arpa(arpafname);
-    int lm_start_node = lm.advance(lm.root_node, lm.vocabulary_lookup.at("<s>"));
 
     map<string, pair<int, flt_type> > class_memberships;
     cerr << "Reading class memberships.." << endl;
     int num_classes = read_class_memberships(classmfname, class_memberships);
 
     cerr << "Reading class n-gram model.." << endl;
-    Ngram class_ng;
+    LNNgram class_ng;
     class_ng.read_arpa(classngramfname);
-    int class_lm_start_node = class_ng.advance(class_ng.root_node, class_ng.vocabulary_lookup.at("<s>"));
 
     // The class indexes are stored as strings in the n-gram class
     vector<int> indexmap(num_classes);
@@ -108,11 +106,10 @@ int main(int argc, char* argv[]) {
         vector<string> words;
         preprocess_sent(line, lm, class_memberships, unk, words, num_words, num_oovs);
 
-        int curr_class_lm_node = class_lm_start_node;
-        int curr_lm_node = lm_start_node;
+        int curr_lm_node = lm.sentence_start_node;
+        int curr_class_lm_node = class_ng.sentence_start_node;
 
         for (int i=0; i<(int)words.size(); i++) {
-
             if (words[i] == unk) {
                 if (root_unk_states) {
                     curr_lm_node = lm.root_node;
@@ -122,36 +119,30 @@ int main(int argc, char* argv[]) {
                     curr_lm_node = lm.advance(curr_lm_node, lm.unk_symbol_idx);
                     curr_class_lm_node = class_ng.advance(curr_class_lm_node, class_ng.unk_symbol_idx);
                 }
-                continue;
+            } else {
+                double ngram_score = 0.0;
+                curr_lm_node = lm.score(curr_lm_node, lm.vocabulary_lookup.at(words[i]), ngram_score);
+                ngram_score += word_iw;
+
+                pair<int, flt_type> word_class = class_memberships.at(words[i]);
+                double class_score = 0.0;
+                curr_class_lm_node = class_ng.score(curr_class_lm_node, indexmap[word_class.first], class_score);
+                class_score += word_class.second;
+                class_score += class_iw;
+
+                sent_ll += add_log_domain_probs(ngram_score, class_score);
             }
-
-            double ngram_score = 0.0;
-            curr_lm_node = lm.score(curr_lm_node, lm.vocabulary_lookup.at(words[i]), ngram_score);
-            ngram_score *= log(10.0);
-            ngram_score += word_iw;
-
-            pair<int, flt_type> word_class = class_memberships.at(words[i]);
-            double class_score = 0.0;
-            curr_class_lm_node = class_ng.score(curr_class_lm_node, indexmap[word_class.first], class_score);
-            class_score *= log(10.0);
-            class_score += word_class.second;
-            class_score += class_iw;
-
-            sent_ll += add_log_domain_probs(ngram_score, class_score);
         }
 
         double ngram_score = 0.0;
         curr_lm_node = lm.score(curr_lm_node, lm.sentence_end_symbol_idx, ngram_score);
-        ngram_score *= log(10.0);
         ngram_score += word_iw;
 
         double class_score = 0.0;
         curr_class_lm_node = class_ng.score(curr_class_lm_node, class_ng.sentence_end_symbol_idx, class_score);
-        class_score *= log(10.0);
         class_score += class_iw;
 
         sent_ll += add_log_domain_probs(ngram_score, class_score);
-
         total_ll += sent_ll;
         num_sents++;
     }
@@ -171,4 +162,3 @@ int main(int argc, char* argv[]) {
 
     exit(0);
 }
-

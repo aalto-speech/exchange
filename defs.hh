@@ -11,9 +11,6 @@
 
 typedef float flt_type;
 
-#define START_CLASS 0
-#define UNK_CLASS 1
-
 
 // Return log(X+Y) where a=log(X) b=log(Y)
 static flt_type add_log_domain_probs(flt_type a, flt_type b) {

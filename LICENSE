@@ -1,4 +1,6 @@
-Copyright (c) 2015-2016, Matti Varjokallio
+Copyright (c) 2015-2017, Matti Varjokallio, Seppo Enarvi,
+with the exception of conf.cc, conf.hh, str.hh modules which are
+released as part of the AaltoASR package under the BSD licence.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

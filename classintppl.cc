@@ -155,10 +155,13 @@ int main(int argc, char* argv[]) {
     cerr << "Total log likelihood (ln): " << total_ll << endl;
     cerr << "Total log likelihood (log10): " << total_ll/2.302585092994046 << endl;
 
-    if (config["num-words"].specified)
-        num_words = config["num-words"].get_int();
     double ppl = exp(-1.0/double(num_words) * total_ll);
     cerr << "Perplexity: " << ppl << endl;
+
+    if (config["num-words"].specified) {
+        double wnppl = exp(-1.0/double(config["num-words"].get_int()) * total_ll);
+        cerr << "Word-normalized perplexity: " << wnppl << endl;
+    }
 
     exit(0);
 }

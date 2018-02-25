@@ -440,6 +440,8 @@ Exchange::iterate(int max_iter,
 
     int curr_iter = 0;
     while (true) {
+        cerr << "Iteration " << curr_iter+1 << endl;
+
         for (int widx=0; widx < (int)m_vocabulary.size(); widx++) {
 
             if (m_word_classes[widx] == START_CLASS ||

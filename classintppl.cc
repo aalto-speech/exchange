@@ -54,19 +54,17 @@ evaluate(const LNNgram &ngram,
     double word_iw = log(iw);
     double class_iw = log(1.0-iw);
 
-    cerr << "Scoring sentences.." << endl;
+    cerr << "Evaluating sentences.." << endl;
     SimpleFileInput infile(infname);
     string line;
     long int num_words = 0;
     long int num_sents = 0;
     long int num_oovs = 0;
     double total_ll = 0.0;
-    int linei = 0;
     while (infile.getline(line)) {
 
         line = str::cleaned(line);
         if (line.length() == 0) continue;
-        if (++linei % 10000 == 0) cerr << "sentence " << linei << endl;
 
         double sent_ll = 0.0;
 
@@ -116,6 +114,7 @@ evaluate(const LNNgram &ngram,
     }
 
     cerr << endl;
+    cerr << "Interpolation weight: " << iw << endl;
     cerr << "Number of sentences: " << num_sents << endl;
     cerr << "Number of in-vocabulary words excluding sentence ends: " << num_words-num_sents << endl;
     cerr << "Number of in-vocabulary words including sentence ends: " << num_words << endl;

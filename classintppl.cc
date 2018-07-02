@@ -1,7 +1,8 @@
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <cassert>
+#include <string>
 
 #include "str.hh"
 #include "defs.hh"
@@ -41,51 +42,17 @@ void preprocess_sent(string line,
 }
 
 
-int main(int argc, char* argv[]) {
-
-    conf::Config config;
-    config("usage: classintppl [OPTION...] ARPAFILE CLASS_ARPA CLASS_MEMBERSHIPS INPUT\n")
-    ('i', "weight=FLOAT", "arg", "0.5", "Interpolation weight [0.0,1,0] for the word ARPA model")
-    ('r', "use-root-node", "", "", "Pass through root node in contexts with unks, DEFAULT: advance with unk symbol")
-    ('w', "num-words=INT", "arg", "", "Number of words for computing word-normalized perplexity")
-    ('h', "help", "", "", "display help");
-    config.default_parse(argc, argv);
-    if (config.arguments.size() != 4) config.print_help(stderr, 1);
-
-    string arpafname = config.arguments[0];
-    string classngramfname = config.arguments[1];
-    string classmfname = config.arguments[2];
-    string infname = config.arguments[3];
-
-    string unk = "<unk>";
-    bool root_unk_states = config["use-root-node"].specified;
-
-    double iw = config["weight"].get_float();
-    if (iw < 0.0 || iw > 1.0) {
-        cerr << "Invalid interpolation weight: " << iw << endl;
-        exit(1);
-    }
-    cerr << "Interpolation weight: " << iw << endl;
+void
+evaluate(const LNNgram &ngram,
+         const LNNgram &class_ngram,
+         vector<int> &indexmap,
+         const map<string, pair<int, flt_type> > &class_memberships,
+         conf::Config &config,
+         string infname,
+         double iw=0.5)
+{
     double word_iw = log(iw);
     double class_iw = log(1.0-iw);
-
-    LNNgram lm;
-    lm.read_arpa(arpafname);
-
-    map<string, pair<int, flt_type> > class_memberships;
-    cerr << "Reading class memberships.." << endl;
-    int num_classes = read_class_memberships(classmfname, class_memberships);
-
-    cerr << "Reading class n-gram model.." << endl;
-    LNNgram class_ng;
-    class_ng.read_arpa(classngramfname);
-
-    // The class indexes are stored as strings in the n-gram class
-    vector<int> indexmap(num_classes);
-    for (int i=0; i<(int)indexmap.size(); i++)
-        if (class_ng.vocabulary_lookup.find(int2str(i)) != class_ng.vocabulary_lookup.end())
-            indexmap[i] = class_ng.vocabulary_lookup[int2str(i)];
-        else indexmap[i] = -1;
 
     cerr << "Scoring sentences.." << endl;
     SimpleFileInput infile(infname);
@@ -104,29 +71,30 @@ int main(int argc, char* argv[]) {
         double sent_ll = 0.0;
 
         vector<string> words;
-        preprocess_sent(line, lm, class_memberships, unk, words, num_words, num_oovs);
+        string unk = "<unk>";
+        preprocess_sent(line, ngram, class_memberships, unk, words, num_words, num_oovs);
 
-        int curr_lm_node = lm.sentence_start_node;
-        int curr_class_lm_node = class_ng.sentence_start_node;
+        int curr_lm_node = ngram.sentence_start_node;
+        int curr_class_lm_node = class_ngram.sentence_start_node;
 
         for (int i=0; i<(int)words.size(); i++) {
             if (words[i] == unk) {
-                if (root_unk_states) {
-                    curr_lm_node = lm.root_node;
-                    curr_class_lm_node = class_ng.root_node;
+                if (config["unk-root-node"].specified) {
+                    curr_lm_node = ngram.root_node;
+                    curr_class_lm_node = class_ngram.root_node;
                 }
                 else {
-                    curr_lm_node = lm.advance(curr_lm_node, lm.unk_symbol_idx);
-                    curr_class_lm_node = class_ng.advance(curr_class_lm_node, class_ng.unk_symbol_idx);
+                    curr_lm_node = ngram.advance(curr_lm_node, ngram.unk_symbol_idx);
+                    curr_class_lm_node = class_ngram.advance(curr_class_lm_node, class_ngram.unk_symbol_idx);
                 }
             } else {
                 double ngram_score = 0.0;
-                curr_lm_node = lm.score(curr_lm_node, lm.vocabulary_lookup.at(words[i]), ngram_score);
+                curr_lm_node = ngram.score(curr_lm_node, ngram.vocabulary_lookup.at(words[i]), ngram_score);
                 ngram_score += word_iw;
 
                 pair<int, flt_type> word_class = class_memberships.at(words[i]);
                 double class_score = 0.0;
-                curr_class_lm_node = class_ng.score(curr_class_lm_node, indexmap[word_class.first], class_score);
+                curr_class_lm_node = class_ngram.score(curr_class_lm_node, indexmap[word_class.first], class_score);
                 class_score += word_class.second;
                 class_score += class_iw;
 
@@ -135,11 +103,11 @@ int main(int argc, char* argv[]) {
         }
 
         double ngram_score = 0.0;
-        curr_lm_node = lm.score(curr_lm_node, lm.sentence_end_symbol_idx, ngram_score);
+        curr_lm_node = ngram.score(curr_lm_node, ngram.sentence_end_symbol_idx, ngram_score);
         ngram_score += word_iw;
 
         double class_score = 0.0;
-        curr_class_lm_node = class_ng.score(curr_class_lm_node, class_ng.sentence_end_symbol_idx, class_score);
+        curr_class_lm_node = class_ngram.score(curr_class_lm_node, class_ngram.sentence_end_symbol_idx, class_score);
         class_score += class_iw;
 
         sent_ll += add_log_domain_probs(ngram_score, class_score);
@@ -162,6 +130,69 @@ int main(int argc, char* argv[]) {
         double wnppl = exp(-1.0/double(config["num-words"].get_int()) * total_ll);
         cerr << "Word-normalized perplexity: " << wnppl << endl;
     }
+}
 
-    exit(0);
+
+int main(int argc, char* argv[]) {
+
+    conf::Config config;
+    config("usage: classintppl [OPTION...] ARPAFILE CLASS_ARPA CLASS_MEMBERSHIPS INPUT\n")
+    ('i', "weights=FLOAT", "arg", "0.5", "Comma separated list of interpolation weights [0.0,1.0] for the word ARPA model")
+    ('r', "unk-root-node", "", "", "Pass through root node in contexts with unks, DEFAULT: advance with unk symbol")
+    ('w', "num-words=INT", "arg", "", "Number of words for computing word-normalized perplexity")
+    ('h', "help", "", "", "display help");
+    config.default_parse(argc, argv);
+    if (config.arguments.size() != 4) config.print_help(stderr, 1);
+
+    string arpafname = config.arguments[0];
+    string classngramfname = config.arguments[1];
+    string classmfname = config.arguments[2];
+    string infname = config.arguments[3];
+
+    vector<string> str_weights = str::split(config["weights"].get_str(), ",", false);
+    vector<double> weights;
+    for (int i=0; i<(int)str_weights.size(); i++) {
+        bool weight_ok = true;
+        double weight;
+        try {
+            weight = std::stof(str_weights[i]);
+            if (weight < 0.0 || weight > 1.0) weight_ok = false;
+        } catch (...) {
+            weight_ok = false;
+        }
+
+        if (weight_ok) {
+            weights.push_back(weight);
+        } else {
+            cerr << "Invalid interpolation weights: " << str_weights[i] << endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    LNNgram ngram;
+    ngram.read_arpa(arpafname);
+
+    map<string, pair<int, flt_type> > class_memberships;
+    cerr << "Reading class memberships.." << endl;
+    int num_classes = read_class_memberships(classmfname, class_memberships);
+
+    cerr << "Reading class n-gram model.." << endl;
+    LNNgram class_ngram;
+    class_ngram.read_arpa(classngramfname);
+
+    // The class indexes are stored as strings in the n-gram class
+    vector<int> indexmap(num_classes);
+    for (int i=0; i<(int)indexmap.size(); i++)
+        if (class_ngram.vocabulary_lookup.find(int2str(i)) != class_ngram.vocabulary_lookup.end())
+            indexmap[i] = class_ngram.vocabulary_lookup[int2str(i)];
+        else indexmap[i] = -1;
+
+    cerr << "evaluating " << weights.size()
+         << " interpolation weights: " << endl;
+    for (int i=0; i<(int)weights.size(); i++)
+        cerr << (i>0 ? ", " : "") << weights[i] << endl;
+    for (int i=0; i<(int)weights.size(); i++)
+        evaluate(ngram, class_ngram, indexmap, class_memberships, config, infname, weights[i]);
+
+    exit(EXIT_SUCCESS);
 }

@@ -54,7 +54,7 @@ evaluate(const LNNgram &ngram,
     double word_iw = log(iw);
     double class_iw = log(1.0-iw);
 
-    cerr << "Evaluating sentences.." << endl;
+    cerr << endl << "Evaluating sentences.." << endl;
     SimpleFileInput infile(infname);
     string line;
     long int num_words = 0;
@@ -113,7 +113,6 @@ evaluate(const LNNgram &ngram,
         num_sents++;
     }
 
-    cerr << endl;
     cerr << "Interpolation weight: " << iw << endl;
     cerr << "Number of sentences: " << num_sents << endl;
     cerr << "Number of in-vocabulary words excluding sentence ends: " << num_words-num_sents << endl;
@@ -186,10 +185,10 @@ int main(int argc, char* argv[]) {
             indexmap[i] = class_ngram.vocabulary_lookup[int2str(i)];
         else indexmap[i] = -1;
 
-    cerr << "evaluating " << weights.size()
-         << " interpolation weights: " << endl;
+    cerr << "evaluating " << weights.size() << " interpolation weights: ";
     for (int i=0; i<(int)weights.size(); i++)
-        cerr << (i>0 ? ", " : "") << weights[i] << endl;
+        cerr << (i>0 ? ", " : "") << weights[i];
+    cerr << endl;
     for (int i=0; i<(int)weights.size(); i++)
         evaluate(ngram, class_ngram, indexmap, class_memberships, config, infname, weights[i]);
 

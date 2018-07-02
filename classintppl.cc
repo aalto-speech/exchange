@@ -131,66 +131,71 @@ evaluate(const LNNgram &ngram,
 }
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
+    try {
+        conf::Config config;
+        config("usage: classintppl [OPTION...] ARPAFILE CLASS_ARPA CLASS_MEMBERSHIPS INPUT\n")
+        ('i', "weights=FLOAT", "arg", "0.5", "Comma separated list of interpolation weights [0.0,1.0] for the word ARPA model")
+        ('r', "unk-root-node", "", "", "Pass through root node in contexts with unks, DEFAULT: advance with unk symbol")
+        ('w', "num-words=INT", "arg", "", "Number of words for computing word-normalized perplexity")
+        ('h', "help", "", "", "display help");
+        config.default_parse(argc, argv);
+        if (config.arguments.size() != 4) config.print_help(stderr, 1);
 
-    conf::Config config;
-    config("usage: classintppl [OPTION...] ARPAFILE CLASS_ARPA CLASS_MEMBERSHIPS INPUT\n")
-    ('i', "weights=FLOAT", "arg", "0.5", "Comma separated list of interpolation weights [0.0,1.0] for the word ARPA model")
-    ('r', "unk-root-node", "", "", "Pass through root node in contexts with unks, DEFAULT: advance with unk symbol")
-    ('w', "num-words=INT", "arg", "", "Number of words for computing word-normalized perplexity")
-    ('h', "help", "", "", "display help");
-    config.default_parse(argc, argv);
-    if (config.arguments.size() != 4) config.print_help(stderr, 1);
+        string arpafname = config.arguments[0];
+        string classngramfname = config.arguments[1];
+        string classmfname = config.arguments[2];
+        string infname = config.arguments[3];
 
-    string arpafname = config.arguments[0];
-    string classngramfname = config.arguments[1];
-    string classmfname = config.arguments[2];
-    string infname = config.arguments[3];
+        vector<string> str_weights = str::split(config["weights"].get_str(), ",", false);
+        vector<double> weights;
+        for (int i=0; i<(int)str_weights.size(); i++) {
+            bool weight_ok = true;
+            double weight;
+            try {
+                weight = std::stof(str_weights[i]);
+                if (weight < 0.0 || weight > 1.0) weight_ok = false;
+            } catch (...) {
+                weight_ok = false;
+            }
 
-    vector<string> str_weights = str::split(config["weights"].get_str(), ",", false);
-    vector<double> weights;
-    for (int i=0; i<(int)str_weights.size(); i++) {
-        bool weight_ok = true;
-        double weight;
-        try {
-            weight = std::stof(str_weights[i]);
-            if (weight < 0.0 || weight > 1.0) weight_ok = false;
-        } catch (...) {
-            weight_ok = false;
+            if (weight_ok) {
+                weights.push_back(weight);
+            } else {
+                cerr << "Invalid interpolation weights: " << str_weights[i] << endl;
+                exit(EXIT_FAILURE);
+            }
         }
 
-        if (weight_ok) {
-            weights.push_back(weight);
-        } else {
-            cerr << "Invalid interpolation weights: " << str_weights[i] << endl;
-            exit(EXIT_FAILURE);
-        }
+        LNNgram ngram;
+        ngram.read_arpa(arpafname);
+
+        map<string, pair<int, flt_type> > class_memberships;
+        cerr << "Reading class memberships.." << endl;
+        int num_classes = read_class_memberships(classmfname, class_memberships);
+
+        cerr << "Reading class n-gram model.." << endl;
+        LNNgram class_ngram;
+        class_ngram.read_arpa(classngramfname);
+
+        // The class indexes are stored as strings in the n-gram class
+        vector<int> indexmap(num_classes);
+        for (int i=0; i<(int)indexmap.size(); i++)
+            if (class_ngram.vocabulary_lookup.find(int2str(i)) != class_ngram.vocabulary_lookup.end())
+                indexmap[i] = class_ngram.vocabulary_lookup[int2str(i)];
+            else indexmap[i] = -1;
+
+        cerr << "evaluating " << weights.size() << " interpolation weights: ";
+        for (int i=0; i<(int)weights.size(); i++)
+            cerr << (i>0 ? ", " : "") << weights[i];
+        cerr << endl;
+        for (int i=0; i<(int)weights.size(); i++)
+            evaluate(ngram, class_ngram, indexmap, class_memberships, config, infname, weights[i]);
+
+        exit(EXIT_SUCCESS);
+
+    } catch (string &e) {
+        cerr << e << endl;
     }
-
-    LNNgram ngram;
-    ngram.read_arpa(arpafname);
-
-    map<string, pair<int, flt_type> > class_memberships;
-    cerr << "Reading class memberships.." << endl;
-    int num_classes = read_class_memberships(classmfname, class_memberships);
-
-    cerr << "Reading class n-gram model.." << endl;
-    LNNgram class_ngram;
-    class_ngram.read_arpa(classngramfname);
-
-    // The class indexes are stored as strings in the n-gram class
-    vector<int> indexmap(num_classes);
-    for (int i=0; i<(int)indexmap.size(); i++)
-        if (class_ngram.vocabulary_lookup.find(int2str(i)) != class_ngram.vocabulary_lookup.end())
-            indexmap[i] = class_ngram.vocabulary_lookup[int2str(i)];
-        else indexmap[i] = -1;
-
-    cerr << "evaluating " << weights.size() << " interpolation weights: ";
-    for (int i=0; i<(int)weights.size(); i++)
-        cerr << (i>0 ? ", " : "") << weights[i];
-    cerr << endl;
-    for (int i=0; i<(int)weights.size(); i++)
-        evaluate(ngram, class_ngram, indexmap, class_memberships, config, infname, weights[i]);
-
-    exit(EXIT_SUCCESS);
 }

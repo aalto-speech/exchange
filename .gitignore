@@ -1,5 +1,7 @@
 .project
 .cproject
+.settings
+.idea
 *.o
 *.exe
 runtests
@@ -8,4 +10,3 @@ ngramppl
 classppl
 classintppl
 .idea
-cmake*

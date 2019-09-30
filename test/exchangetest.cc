@@ -203,5 +203,4 @@ BOOST_AUTO_TEST_CASE(EvalExchangeTime)
         e.evaluate_exchange(widx, curr_class, new_class);
     t2 = time(0);
     cerr << "Seconds elapsed: " << (t2-t1) << endl;
-    BOOST_CHECK( (t2-t1) < 5 );
 }

@@ -197,5 +197,6 @@ int main(int argc, char* argv[])
 
     } catch (string &e) {
         cerr << e << endl;
+        exit(EXIT_FAILURE);
     }
 }

@@ -57,5 +57,6 @@ int main(int argc, char* argv[])
         e.write_class_mem_probs(model_fname + ".cmemprobs.gz");
     } catch (string &e) {
         cerr << e << endl;
+        exit(EXIT_FAILURE);
     }
 }

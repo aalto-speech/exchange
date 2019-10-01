@@ -69,7 +69,8 @@ public:
             for (unsigned int i=0; i<ngram.size(); i++)
                 if (ngram[i] < ngri.ngram[i]) return true;
                 else if (ngri.ngram[i] < ngram[i]) return false;
-            throw std::string("Comparing same ngrams");
+            std::cerr << "Warning, comparing same n-grams" << std::endl;
+            return false;
         }
     };
 

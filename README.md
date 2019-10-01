@@ -36,7 +36,7 @@ unk symbol (for instance SRILM) use the --lc_unk switch.
 ngramppl/classppl/classintppl checks for the correct unk symbol.  
 
 Example:  
-`exchange -c 1000 -a 1000 -m 10000 -t 2 corpus.txt exchange.c1000`  
+`exchange -c 1000 -o 999 -a 1000 -m 10000 -t 2 corpus.txt exchange.c1000`  
 `scripts/class_corpus.py --cap_unk exchange.c1000.cmemprobs.gz <train.txt >train.classes.txt`  
 `scripts/class_corpus.py --cap_unk exchange.c1000.cmemprobs.gz <devel.txt >devel.classes.txt`  
 `varigram_kn -3 -C -Z -a -n 5 -D 0.02 -E 0.04 -o devel.classes.txt train.classes.txt exchange.vkn.5g.arpa.gz`  
